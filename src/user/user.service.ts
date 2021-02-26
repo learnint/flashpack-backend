@@ -29,6 +29,12 @@ export class UserService {
     return await this.userRepository.findOne(id);
   }
 
+  async findOneByUsername(username: string): Promise<User> {
+    const users: User[] = await this.findAll();
+    const user: User = users.find((x) => x.userName === username);
+    return user;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.userRepository.findOne(id);
 
