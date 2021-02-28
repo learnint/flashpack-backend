@@ -5,6 +5,7 @@ import {
   BaseEntity,
   BeforeInsert,
   BeforeUpdate,
+  Unique,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 

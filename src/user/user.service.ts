@@ -17,17 +17,7 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     // detect existing username/email
-    if (await this.findOneByUsername(createUserDto.userName)) {
-      throw new ConflictException(
-        `User '${createUserDto.userName}' already exists`,
-      );
-    }
-    if (await this.findOneByEmail(createUserDto.email)) {
-      throw new ConflictException(
-        `A user with the email '${createUserDto.email}' already exists.`,
-      );
-    }
-
+    await this.detectDuplicate(User.create(createUserDto));
     //create the new user as per defined in the request
     const user: User = User.create();
 
@@ -37,6 +27,30 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
+  private async detectDuplicate(user: User, isUpdate = false) {
+    let userByUsername = await this.findOneByUsername(user.userName);
+    let userByEmail = await this.findOneByEmail(user.email);
+
+    if (isUpdate) {
+      const userById = await this.userRepository.findOne(user.id);
+      const allUsers: User[] = await this.findAll();
+      const allUsersExceptMe = allUsers.filter((x) => x.id !== userById.id);
+
+      userByUsername = allUsersExceptMe.find(
+        (x) => x.userName === user.userName,
+      );
+      userByEmail = allUsersExceptMe.find((x) => x.email === user.email);
+    }
+
+    if (userByUsername) {
+      throw new ConflictException(`User '${user.userName}' already exists`);
+    }
+    if (userByEmail) {
+      throw new ConflictException(
+        `A user with the email '${user.email}' already exists.`,
+      );
+    }
+  }
   async findAll(): Promise<User[]> {
     return await this.userRepository.find();
   }
@@ -60,8 +74,11 @@ export class UserService {
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.userRepository.findOne(id);
 
+    //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
+    await this.detectDuplicate(User.create(updateUserDto), true);
 
+    //update
     for (const key in updateUserDto) {
       if (updateUserDto[key] !== user[key] && updateUserDto[key] !== null)
         user[key] = updateUserDto[key];
