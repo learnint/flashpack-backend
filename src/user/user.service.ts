@@ -16,19 +16,15 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    // detect existing username/email
-    await this.detectDuplicate(User.create(createUserDto));
-    //create the new user as per defined in the request
-    const user: User = User.create();
+    const newUser = User.create(createUserDto);
+    // detect existing email
+    await this.detectDuplicate(newUser);
 
-    for (const key in createUserDto) {
-      user[key] = createUserDto[key];
-    }
-    return await this.userRepository.save(user);
+    // save the new user and return the details
+    return await this.userRepository.save(newUser);
   }
 
   private async detectDuplicate(user: User, isUpdate = false) {
-    let userByUsername = await this.findOneByUsername(user.userName);
     let userByEmail = await this.findOneByEmail(user.email);
 
     if (isUpdate) {
@@ -36,14 +32,7 @@ export class UserService {
       const allUsers: User[] = await this.findAll();
       const allUsersExceptMe = allUsers.filter((x) => x.id !== userById.id);
 
-      userByUsername = allUsersExceptMe.find(
-        (x) => x.userName === user.userName,
-      );
       userByEmail = allUsersExceptMe.find((x) => x.email === user.email);
-    }
-
-    if (userByUsername) {
-      throw new ConflictException(`User '${user.userName}' already exists`);
     }
     if (userByEmail) {
       throw new ConflictException(
@@ -59,15 +48,9 @@ export class UserService {
     return await this.userRepository.findOne(id);
   }
 
-  private async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User> {
     const users: User[] = await this.findAll();
     const user: User = users.find((x) => x.email === email);
-    return user;
-  }
-
-  async findOneByUsername(username: string): Promise<User> {
-    const users: User[] = await this.findAll();
-    const user: User = users.find((x) => x.userName === username);
     return user;
   }
 

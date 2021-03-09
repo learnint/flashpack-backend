@@ -5,7 +5,6 @@ import {
   BaseEntity,
   BeforeInsert,
   BeforeUpdate,
-  Unique,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
@@ -22,9 +21,6 @@ export class User extends BaseEntity {
 
   @Column()
   email: string;
-
-  @Column()
-  userName: string;
 
   @Column()
   password: string;

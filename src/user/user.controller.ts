@@ -14,34 +14,41 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('/api/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return await this.userService.create(createUserDto);
   }
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get()
   async findAll(): Promise<User[]> {
     return await this.userService.findAll();
   }
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User> {
     return await this.userService.findOne(id);
   }
 
-  @Get('byUserName/:userName')
-  async findOneByUserName(@Param('userName') userName: string): Promise<User> {
-    return await this.userService.findOneByUsername(userName);
-  }
+  // @ApiBearerAuth()
+  // @UseGuards(AuthGuard('jwt'))
+  // @Get('byUserName/:userName')
+  // async findOneByUserName(@Param('userName') userName: string): Promise<User> {
+  //   return await this.userService.findOneByUsername(userName);
+  // }
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Put(':id')
   async update(
@@ -51,9 +58,10 @@ export class UserController {
     return await this.userService.update(id, updateUserDto);
   }
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.userService.remove(id);
   }
 }
