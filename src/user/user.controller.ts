@@ -15,6 +15,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { UserDto } from './dto/user.dto';
+import { plainToClass } from 'class-transformer';
 
 @Controller('/api/user')
 export class UserController {
@@ -23,22 +25,22 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return await this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserDto> {
+    return plainToClass(UserDto, await this.userService.create(createUserDto));
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get()
-  async findAll(): Promise<User[]> {
-    return await this.userService.findAll();
+  async findAll(): Promise<UserDto[]> {
+    return plainToClass(UserDto, await this.userService.findAll());
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    return await this.userService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<UserDto> {
+    return plainToClass(UserDto, await this.userService.findOne(id));
   }
 
   @ApiBearerAuth()
@@ -47,8 +49,11 @@ export class UserController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-  ): Promise<User> {
-    return await this.userService.update(id, updateUserDto);
+  ): Promise<UserDto> {
+    return plainToClass(
+      UserDto,
+      await this.userService.update(id, updateUserDto),
+    );
   }
 
   @ApiBearerAuth()
