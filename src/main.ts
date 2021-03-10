@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   DocumentBuilder,
@@ -23,6 +24,8 @@ async function bootstrap() {
   };
 
   SwaggerModule.setup('api', app, document, customOptions);
+
+  await app.useGlobalPipes(new ValidationPipe());
   await app.listen(3000);
 }
 bootstrap();

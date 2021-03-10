@@ -41,13 +41,6 @@ export class UserController {
     return await this.userService.findOne(id);
   }
 
-  // @ApiBearerAuth()
-  // @UseGuards(AuthGuard('jwt'))
-  // @Get('byUserName/:userName')
-  // async findOneByUserName(@Param('userName') userName: string): Promise<User> {
-  //   return await this.userService.findOneByUsername(userName);
-  // }
-
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Put(':id')

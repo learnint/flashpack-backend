@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Group } from 'src/group/entities/group.entity';
 import { User } from 'src/user/entities/user.entity';
 import { rootCertificates } from 'tls';
 
@@ -13,7 +14,7 @@ import { rootCertificates } from 'tls';
       password: '4l+L58m4',
       database: 'flashPack',
       synchronize: true,
-      entities: [User],
+      entities: [User, Group],
     }),
   ],
 })

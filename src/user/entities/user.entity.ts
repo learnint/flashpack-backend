@@ -5,8 +5,10 @@ import {
   BaseEntity,
   BeforeInsert,
   BeforeUpdate,
+  OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Group } from 'src/group/entities/group.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -24,6 +26,9 @@ export class User extends BaseEntity {
 
   @Column()
   password: string;
+
+  @OneToMany((type) => Group, (group) => group.createdByUser)
+  groups: Group[];
 
   // Take the supplied password and hash + salt it
   @BeforeUpdate()
