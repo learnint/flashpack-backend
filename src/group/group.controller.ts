@@ -15,6 +15,8 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Group } from './entities/group.entity';
+import { GroupDto } from './dto/group.dto';
+import { plainToClass } from 'class-transformer';
 
 @Controller('/api/group')
 export class GroupController {
@@ -26,14 +28,18 @@ export class GroupController {
   async create(
     @Body() createGroupDto: CreateGroupDto,
     @Req() req,
-  ): Promise<Group> {
-    return await this.groupService.create(createGroupDto, req.user.id);
+  ): Promise<GroupDto> {
+    const group = await this.groupService.create(createGroupDto, req.user.id);
+    return plainToClass(GroupDto, group);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.groupService.findAll();
-  // }
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get()
+  async findAll(@Req() req): Promise<GroupDto[]> {
+    const groups: Group[] = await this.groupService.findAll();
+    return plainToClass(GroupDto, groups);
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {
