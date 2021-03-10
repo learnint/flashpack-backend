@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -37,6 +38,8 @@ export class GroupController {
   @UseGuards(AuthGuard('jwt'))
   @Get()
   async findAll(@Req() req): Promise<GroupDto[]> {
+    // Throw Forbidden HTTP error if the user is not an admin
+    if (!this.groupService.isAdmin(req.user.id)) throw new ForbiddenException();
     const groups: Group[] = await this.groupService.findAll();
     return plainToClass(GroupDto, groups);
   }

@@ -18,22 +18,23 @@ export class UserService {
   async create(createUserDto: CreateUserDto): Promise<User> {
     const newUser = User.create(createUserDto);
     // detect existing email
-    await this.detectDuplicate(newUser);
+    await this.detectDuplicate(newUser, newUser.id);
 
     // save the new user and return the details
     return await this.userRepository.save(newUser);
   }
 
-  private async detectDuplicate(user: User, isUpdate = false) {
+  private async detectDuplicate(user: User, id: string, isUpdate = false) {
     let userByEmail = await this.findOneByEmail(user.email);
 
     if (isUpdate) {
-      const userById = await this.userRepository.findOne(user.id);
       const allUsers: User[] = await this.findAll();
-      const allUsersExceptMe = allUsers.filter((x) => x.id !== userById.id);
+      const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
 
       userByEmail = allUsersExceptMe.find((x) => x.email === user.email);
+      console.log(userByEmail);
     }
+
     if (userByEmail) {
       throw new ConflictException(
         `A user with the email '${user.email}' already exists.`,
@@ -59,7 +60,7 @@ export class UserService {
 
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
-    await this.detectDuplicate(User.create(updateUserDto), true);
+    await this.detectDuplicate(User.create(updateUserDto), id, true);
 
     //update
     for (const key in updateUserDto) {

@@ -27,6 +27,9 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
+  @Column('boolean', { nullable: true })
+  isAdmin: boolean;
+
   @OneToMany((type) => Group, (group) => group.createdByUser)
   groups: Group[];
 

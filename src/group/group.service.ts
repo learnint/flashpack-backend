@@ -5,6 +5,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -22,7 +23,7 @@ export class GroupService {
   async create(createGroupDto: CreateGroupDto, id: string): Promise<Group> {
     const newGroup = Group.create(createGroupDto);
     // detect existing group name
-    await this.detectDuplicate(newGroup);
+    await this.detectDuplicate(newGroup, id);
 
     newGroup.createdByUser = await this.userService.findOne(id);
     newGroup.createdByName = `${newGroup.createdByUser.firstName} ${newGroup.createdByUser.lastName}`;
@@ -32,13 +33,12 @@ export class GroupService {
     return await this.groupRepository.save(newGroup);
   }
 
-  private async detectDuplicate(group: Group, isUpdate = false) {
+  private async detectDuplicate(group: Group, id: string, isUpdate = false) {
     let groupByEmail = await this.findOneByName(group.name);
 
     if (isUpdate) {
-      const groupById = await this.groupRepository.findOne(group.id);
       const allGroups: Group[] = await this.findAll();
-      const allGroupsExceptMe = allGroups.filter((x) => x.id !== groupById.id);
+      const allGroupsExceptMe = allGroups.filter((x) => x.id !== id);
 
       groupByEmail = allGroupsExceptMe.find((x) => x.name === group.name);
     }
@@ -53,7 +53,7 @@ export class GroupService {
     return await this.groupRepository.find();
   }
 
-  async findOne(id: number): Promise<Group> {
+  async findOne(id: string): Promise<Group> {
     return await this.groupRepository.findOne(id);
   }
 
@@ -63,12 +63,12 @@ export class GroupService {
     return group;
   }
 
-  async update(id: number, updateGroupDto: UpdateGroupDto): Promise<Group> {
+  async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
     const group = await this.groupRepository.findOne(id);
 
     //Not found and conflict exceptions
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
-    await this.detectDuplicate(Group.create(updateGroupDto), true);
+    await this.detectDuplicate(Group.create(updateGroupDto), id, true);
 
     //update
     for (const key in updateGroupDto) {
@@ -78,7 +78,11 @@ export class GroupService {
     return await this.groupRepository.save(group);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.groupRepository.delete(id);
+  }
+
+  async isAdmin(id: string): Promise<boolean>{
+    return await (await this.userService.findOne(id)).isAdmin;
   }
 }
