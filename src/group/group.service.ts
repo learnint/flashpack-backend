@@ -11,6 +11,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group } from './entities/group.entity';
 import { GroupMember } from './entities/group-member.entity';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class GroupService {
@@ -52,7 +53,7 @@ export class GroupService {
 
     if(!group || !user)
       throw new NotFoundException(!user ? `User with ID: '${userId}' not found` : `Group with ID: '${groupId}' not found`);
-      
+
     const groupMember = GroupMember.create();
     groupMember.group = group;
     groupMember.user = user;
@@ -80,7 +81,10 @@ export class GroupService {
   }
 
   async findOne(id: string): Promise<Group> {
-    return await this.groupRepository.findOne(id);
+    const group = await this.groupRepository.findOne(id);
+    const groupMembers = (await (await this.groupMemberRepository.find()));//.filter(x => x.group.id === id));
+    group.groupMembers = groupMembers.filter(x => x.group.toString() === group.id);
+    return await group;
   }
 
   async findOneByName(name: string): Promise<Group> {

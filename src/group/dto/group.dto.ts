@@ -1,5 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import { IsNotEmpty, IsUUID, Length } from 'class-validator';
+import { GroupMember } from '../entities/group-member.entity';
 
 @Exclude()
 export class GroupDto {
@@ -21,4 +22,6 @@ export class GroupDto {
    description: string;
   @Expose()
    tags: string[];
+   @Expose()
+   groupMembers: GroupMember[];
 }
