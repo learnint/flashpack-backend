@@ -21,9 +21,12 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Group } from './entities/group.entity';
@@ -44,6 +47,7 @@ export class GroupController {
   @ApiBadRequestResponse({
     description: 'Model broken somewhere in the request',
   })
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post()
@@ -55,6 +59,11 @@ export class GroupController {
     return plainToClass(GroupDto, group);
   }
 
+  @ApiCreatedResponse({ description: 'Joined Group', type: Group })
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post('/join')
@@ -65,6 +74,10 @@ export class GroupController {
     return await this.groupService.joinGroup(userId, groupId);
   }
 
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get()
@@ -75,16 +88,32 @@ export class GroupController {
     return plainToClass(GroupDto, await this.groupService.findAll());
   }
 
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiNotFoundResponse({ description: 'ID not found' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<GroupDto> {
     const user = await this.groupService.findOne(id);
-    if (!user)
-      throw new NotFoundException(`User with id: '${id}' does not exist`);
+    if (!user) throw new NotFoundException(`User with id: '${id}' not found`);
     return plainToClass(GroupDto, user);
   }
 
+  @ApiOkResponse({ description: 'Successfully updated Group', type: Group })
+  @ApiConflictResponse({
+    description: 'Conflict. Duplicate group name',
+  })
+  @ApiBadRequestResponse({
+    description: 'Model broken somewhere in the request',
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiNotFoundResponse({ description: 'ID not found' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Put(':id')
@@ -98,6 +127,9 @@ export class GroupController {
     );
   }
 
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')

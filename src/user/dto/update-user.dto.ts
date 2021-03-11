@@ -11,7 +11,6 @@ export class UpdateUserDto {
 
   @IsNotEmpty()
   @Expose()
-
   readonly lastName: string;
 
   @IsEmail()

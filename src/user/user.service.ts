@@ -74,11 +74,16 @@ export class UserService {
   }
 
   async isAdmin(id: string): Promise<boolean> {
-    return await (await this.findOne(id)).isAdmin;
+    const val = await (await this.findOne(id)).isAdmin;
+    console.log(val);
+    console.log(val == null ? false : val);
+    return val == null ? false : val;
   }
 
   async makeAdmin(id: string, makeAdmin: boolean): Promise<User> {
     const user = await this.findOne(id);
+
+    if (!user) throw new NotFoundException(`User with ID: '${id}' not found`);
     user.isAdmin = makeAdmin;
     return await this.update(user.id, user);
   }
