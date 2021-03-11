@@ -10,12 +10,15 @@ import { Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group } from './entities/group.entity';
+import { GroupMember } from './entities/group-member.entity';
 
 @Injectable()
 export class GroupService {
   constructor(
     @InjectRepository(Group)
     private readonly groupRepository: Repository<Group>,
+    @InjectRepository(GroupMember)
+    private readonly groupMemberRepository: Repository<GroupMember>,
     private readonly userService: UserService,
   ) {}
 
@@ -28,8 +31,28 @@ export class GroupService {
     newGroup.createdByName = `${newGroup.createdByUser.firstName} ${newGroup.createdByUser.lastName}`;
     newGroup.link = 'http://localhost';
 
+    const savedGroup = await this.groupRepository.save(newGroup);
+    // auto join group creator to group
+    if (savedGroup) await this.createGroupMember(newGroup);
+
     // save the new group and return the details
-    return await this.groupRepository.save(newGroup);
+    return savedGroup;
+  }
+
+  private async createGroupMember(group: Group): Promise<GroupMember> {
+    const groupMember = GroupMember.create();
+    groupMember.group = group;
+    groupMember.user = await this.userService.findOne(group.createdByUser.id);
+    return await this.groupMemberRepository.save(groupMember);
+  }
+
+  async joinGroup(userId: string, groupId: string): Promise<GroupMember> {
+    const group = await this.findOne(groupId);
+    const user = await this.userService.findOne(userId);
+    const groupMember = GroupMember.create();
+    groupMember.group = group;
+    groupMember.user = user;
+    return await this.groupMemberRepository.save(groupMember);
   }
 
   private async detectDuplicate(group: Group, id: string, isUpdate = false) {
@@ -81,7 +104,7 @@ export class GroupService {
     await this.groupRepository.delete(id);
   }
 
-  async isAdmin(id: string): Promise<boolean>{
-    return await (await this.userService.findOne(id)).isAdmin;
+  async userIsAdmin(id: string): Promise<boolean> {
+    return await this.userService.isAdmin(id);
   }
 }

@@ -32,7 +32,6 @@ export class UserService {
       const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
 
       userByEmail = allUsersExceptMe.find((x) => x.email === user.email);
-      console.log(userByEmail);
     }
 
     if (userByEmail) {
@@ -72,5 +71,15 @@ export class UserService {
 
   async remove(id: string): Promise<void> {
     await this.userRepository.delete(id);
+  }
+
+  async isAdmin(id: string): Promise<boolean> {
+    return await (await this.findOne(id)).isAdmin;
+  }
+
+  async makeAdmin(id: string, makeAdmin: boolean): Promise<User> {
+    const user = await this.findOne(id);
+    user.isAdmin = makeAdmin;
+    return await this.update(user.id, user);
   }
 }

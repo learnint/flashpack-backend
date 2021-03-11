@@ -8,10 +8,12 @@ import {
   ManyToOne,
   Generated,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
+import { GroupMember } from './group-member.entity';
 
 @Entity()
 export class Group extends BaseEntity {
@@ -41,6 +43,9 @@ export class Group extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.groups)
   createdByUser: User;
+
+  @OneToMany(() => GroupMember, (groupMember) => groupMember.group)
+  groupMembers: GroupMember[];
 
   // Take the supplied password and hash + salt it
   @BeforeUpdate()

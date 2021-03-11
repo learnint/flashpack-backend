@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import {
   DocumentBuilder,
   SwaggerCustomOptions,
+  SwaggerDocumentOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -16,7 +17,11 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const options: SwaggerDocumentOptions = {
+    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+  };
+  const document = SwaggerModule.createDocument(app, config, options);
+
   const customOptions: SwaggerCustomOptions = {
     swaggerOptions: {
       persistAuthorization: true,
@@ -25,7 +30,11 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document, customOptions);
 
-  await app.useGlobalPipes(new ValidationPipe());
+  await app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  );
   await app.listen(3000);
 }
 bootstrap();
