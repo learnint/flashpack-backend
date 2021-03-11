@@ -19,5 +19,6 @@ export class CreateGroupDto {
   description: string;
 
   @IsOptional()
+  @Expose()
   tags: string[];
 }

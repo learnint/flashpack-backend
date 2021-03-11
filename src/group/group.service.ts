@@ -49,6 +49,10 @@ export class GroupService {
   async joinGroup(userId: string, groupId: string): Promise<GroupMember> {
     const group = await this.findOne(groupId);
     const user = await this.userService.findOne(userId);
+
+    if(!group || !user)
+      throw new NotFoundException(!user ? `User with ID: '${userId}' not found` : `Group with ID: '${groupId}' not found`);
+      
     const groupMember = GroupMember.create();
     groupMember.group = group;
     groupMember.user = user;
