@@ -151,10 +151,20 @@ export class UserController {
     );
   }
 
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiBadRequestResponse({
+    description: 'Invalid UUID',
+  })
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+
+    if (req.user.id !== id) {
+      if (!(await this.userService.isAdmin(req.user.id)))
+        throw new ForbiddenException();
+    }
     return await this.userService.remove(id);
   }
 }

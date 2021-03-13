@@ -62,7 +62,6 @@ export class User extends BaseEntity {
     this.firstName =  stringUtil.makeName(this.firstName);
     this.lastName = stringUtil.makeName(this.lastName);
     this.email = this.email.toLowerCase().trim();
-    
   }
 
 }

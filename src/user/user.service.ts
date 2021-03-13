@@ -33,9 +33,8 @@ export class UserService {
       const allUsers: User[] = await this.findAll();
       const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
 
-      userByEmail = allUsersExceptMe.find((x) => x.email.toLowerCase() === user.email.toLowerCase());
+      userByEmail = allUsersExceptMe.find((x) => x.email === user.email.toLowerCase());
     }
-
     if (userByEmail) {
       throw new ConflictException(
         `A user with the email '${user.email}' already exists.`,
