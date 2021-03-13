@@ -44,7 +44,7 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Get('whoAmI')
   async whoAmI(@Req() req): Promise<UserDto>{
-    return await this.userService.findOne(req.user.id);
+    return await plainToClass(UserDto,this.userService.findOne(req.user.id));
   }
 
   @ApiInternalServerErrorResponse({
