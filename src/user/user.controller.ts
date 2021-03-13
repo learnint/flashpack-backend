@@ -74,6 +74,7 @@ export class UserController {
     // Throw Forbidden HTTP error if the user is not an admin;
     if (!(await this.userService.isAdmin(req.user.id)))
       throw new ForbiddenException();
+      console.log(await this.userService.findAll());
 
     return plainToClass(UserDto, await this.userService.findAll());
   }

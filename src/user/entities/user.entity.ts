@@ -14,9 +14,6 @@ import { StringUtil } from 'src/util/string.util';
 
 @Entity()
 export class User extends BaseEntity {
-  // constructor(private readonly stringUtil: StringUtil) {
-  //   super();
-  // }
   
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -56,6 +53,7 @@ export class User extends BaseEntity {
   }
 
   @BeforeInsert()
+  @BeforeUpdate()
   setName() {
     const stringUtil = new StringUtil();
 
