@@ -1,27 +1,28 @@
 import { Exclude, Expose } from 'class-transformer';
 import { IsNotEmpty, IsUUID, Length } from 'class-validator';
-import { GroupMember } from '../entities/group-member.entity';
 
 @Exclude()
 export class GroupDto {
   @IsUUID()
   @Expose()
-   id: string;
+  id: string;
   @Expose()
   @IsNotEmpty()
   @Length(3, 20)
-   name: string;
+  name: string;
   @Expose()
-   createdDate: Date;
+  createdDate: Date;
   @Expose()
-   createdByName: string;
+  createdByName: string;
   @Expose()
-   link: string;
+  link: string;
   @Expose()
   @Length(0, 500)
-   description: string;
+  description: string;
   @Expose()
-   tags: string[];
-   @Expose()
-   groupMembers: GroupMember[];
+  tags: string[];
+  @Expose()
+  memberNames: string[];
+  @Expose()
+  memberCount: number;
 }

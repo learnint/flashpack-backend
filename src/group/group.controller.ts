@@ -33,6 +33,7 @@ import { Group } from './entities/group.entity';
 import { GroupDto } from './dto/group.dto';
 import { plainToClass } from 'class-transformer';
 import { GroupMember } from './entities/group-member.entity';
+import { GroupAdmin } from './entities/group-admin.entity';
 
 @ApiTags('group')
 @Controller('/api/group')
@@ -59,6 +60,11 @@ export class GroupController {
     return plainToClass(GroupDto, group);
   }
 
+  @ApiBadRequestResponse({
+    description: 'Model broken somewhere in the request',
+  })
+  @ApiNotFoundResponse({ description: 'User or Group not found' })
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
   @ApiCreatedResponse({ description: 'Joined Group', type: Group })
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiInternalServerErrorResponse({
@@ -70,8 +76,43 @@ export class GroupController {
   async joinGroup(
     @Query('userId', ParseUUIDPipe) userId: string,
     @Query('groupId', ParseUUIDPipe) groupId: string,
+    @Req() req,
   ): Promise<GroupMember> {
+    //ensure user is itself or a userAdmin or a GroupAdmin of the group
+    const isAdmin = this.groupService.userIsAdmin(req.user.id);
+    const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
+    if (!isAdmin && !isGroupAdmin) {
+      if (userId !== req.user.id) {
+        throw new ForbiddenException();
+      }
+    }
     return await this.groupService.joinGroup(userId, groupId);
+  }
+
+  @ApiBadRequestResponse({
+    description: 'Model broken somewhere in the request',
+  })
+  @ApiNotFoundResponse({ description: 'User or Group not found' })
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
+  @ApiCreatedResponse({ description: 'Joined as Group Admin', type: Group })
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('join-admin')
+  async joinGroupAdmin(
+    @Query('userId', ParseUUIDPipe) userId: string,
+    @Query('groupId', ParseUUIDPipe) groupId: string,
+    @Req() req,
+  ): Promise<GroupAdmin> {
+    if (
+      !this.groupService.userIsAdmin(req.user.id) ||
+      !this.groupService.isGroupAdmin(req.user.id, groupId)
+    )
+      throw new ForbiddenException();
+    return await this.groupService.joinGroupAdmin(userId, groupId);
   }
 
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
@@ -81,13 +122,15 @@ export class GroupController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get()
-  async findAll(@Req() req): Promise<GroupDto[]> {
-    // Throw Forbidden HTTP error if the user is not an admin
-    if (!this.groupService.userIsAdmin(req.user.id))
-      throw new ForbiddenException();
-    return plainToClass(GroupDto, await this.groupService.findAll());
+  async findAll(): Promise<GroupDto[]> {
+    return await this.groupService.createGroupDtoArray(
+      await this.groupService.findAll(),
+    );
   }
 
+  @ApiBadRequestResponse({
+    description: 'Invalid UUID',
+  })
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiNotFoundResponse({ description: 'ID not found' })
   @ApiInternalServerErrorResponse({
@@ -97,11 +140,12 @@ export class GroupController {
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<GroupDto> {
-    const user = await this.groupService.findOne(id);
-    if (!user) throw new NotFoundException(`User with id: '${id}' not found`);
-    return plainToClass(GroupDto, user);
+    return await this.groupService.createGroupDto(
+      await this.groupService.findOne(id),
+    );
   }
 
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
   @ApiOkResponse({ description: 'Successfully updated Group', type: Group })
   @ApiConflictResponse({
     description: 'Conflict. Duplicate group name',
@@ -120,20 +164,64 @@ export class GroupController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateGroupDto: UpdateGroupDto,
+    @Req() req,
   ): Promise<GroupDto> {
+    if (
+      !this.groupService.userIsAdmin(req.user.id) ||
+      !this.groupService.isGroupAdmin(req.user.id, id)
+    )
+      throw new ForbiddenException();
     return plainToClass(
       GroupDto,
       await this.groupService.update(id, updateGroupDto),
     );
   }
 
+  @ApiBadRequestResponse({
+    description: 'Invalid ID',
+  })
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    if (
+      !this.groupService.userIsAdmin(req.user.id) ||
+      !this.groupService.isGroupAdmin(req.user.id, id)
+    )
+      throw new ForbiddenException();
     return await this.groupService.remove(id);
+  }
+
+  //TODO: DELETE - i.e leave group, leave group admin.
+  @ApiBadRequestResponse({
+    description: 'Invalid ID',
+  })
+  @ApiNotFoundResponse({ description: 'Group member not found' })
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('leaveGroup/:userId/:groupId')
+  async leaveGroup(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Req() req,
+  ) {
+    //ensure user is itself or a userAdmin or a GroupAdmin of the group
+    const isAdmin = this.groupService.userIsAdmin(req.user.id);
+    const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
+    if (!isAdmin && !isGroupAdmin) {
+      if (userId !== req.user.id) {
+        throw new ForbiddenException();
+      }
+    }
+
+    return await this.groupService.leaveGroup(userId, groupId);
   }
 }

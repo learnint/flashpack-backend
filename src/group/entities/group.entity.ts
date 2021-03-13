@@ -41,7 +41,10 @@ export class Group extends BaseEntity {
   @Column()
   link: string;
 
-  @ManyToOne(() => User, (user) => user.groups)
+  @ManyToOne(() => User, (user) => user.groups, {
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
   createdByUser: User;
 
   @OneToMany(() => GroupMember, (groupMember) => groupMember.group)

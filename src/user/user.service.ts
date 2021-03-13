@@ -75,8 +75,6 @@ export class UserService {
 
   async isAdmin(id: string): Promise<boolean> {
     const val = await (await this.findOne(id)).isAdmin;
-    console.log(val);
-    console.log(val == null ? false : val);
     return val == null ? false : val;
   }
 

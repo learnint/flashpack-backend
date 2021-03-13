@@ -19,7 +19,18 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { plainToClass } from 'class-transformer';
 import { User } from './entities/user.entity';
@@ -37,7 +48,7 @@ export class UserController {
     description: 'Conflict with email, it is already in use',
   })
   @ApiBadRequestResponse({
-    description: 'Model broken somewhere in the request',
+    description: 'Invalid UUID',
   })
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<UserDto> {
@@ -54,8 +65,7 @@ export class UserController {
   @Get()
   async findAll(@Req() req): Promise<UserDto[]> {
     // Throw Forbidden HTTP error if the user is not an admin;
-    if ((await this.userService.isAdmin(req.user.id)) === false) {
-      console.log('here');
+    if (!(await this.userService.isAdmin(req.user.id))) {
       throw new ForbiddenException();
     }
     return plainToClass(UserDto, await this.userService.findAll());
@@ -120,9 +130,7 @@ export class UserController {
     @Req() req,
   ): Promise<UserDto> {
     // Throw Forbidden HTTP error if the user is not an admin
-    const d = await this.userService.isAdmin(req.user.id);
-    console.log(d);
-    if ((await this.userService.isAdmin(req.user.id)) === false)
+    if (!(await this.userService.isAdmin(req.user.id)))
       throw new ForbiddenException();
     return plainToClass(
       UserDto,
