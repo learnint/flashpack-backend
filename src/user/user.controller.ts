@@ -43,8 +43,8 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get('whoAmI')
-  async whoAmI(@Req() req): Promise<UserDto>{
-    return await plainToClass(UserDto,this.userService.findOne(req.user.id));
+  async whoAmI(@Req() req): Promise<UserDto> {
+    return await plainToClass(UserDto, this.userService.findOne(req.user.id));
   }
 
   @ApiInternalServerErrorResponse({
@@ -74,7 +74,6 @@ export class UserController {
     // Throw Forbidden HTTP error if the user is not an admin;
     if (!(await this.userService.isAdmin(req.user.id)))
       throw new ForbiddenException();
-      console.log(await this.userService.findAll());
 
     return plainToClass(UserDto, await this.userService.findAll());
   }
@@ -111,10 +110,8 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() req,
   ): Promise<UserDto> {
-    if (req.user.id !== id) {
-      if (!(await this.userService.isAdmin(req.user.id)))
-        throw new ForbiddenException();
-    }
+    if (req.user.id !== id && !(await this.userService.isAdmin(req.user.id)))
+      throw new ForbiddenException();
 
     return plainToClass(
       UserDto,
@@ -161,11 +158,8 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
-
-    if (req.user.id !== id) {
-      if (!(await this.userService.isAdmin(req.user.id)))
-        throw new ForbiddenException();
-    }
+    if (req.user.id !== id && !(await this.userService.isAdmin(req.user.id)))
+      throw new ForbiddenException();
     return await this.userService.remove(id);
   }
 }

@@ -20,6 +20,7 @@ export class GroupMember extends BaseEntity {
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
+    eager: true,
   })
   group: Group;
 
@@ -28,6 +29,7 @@ export class GroupMember extends BaseEntity {
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
+    eager: true,
   })
   user: User;
 }

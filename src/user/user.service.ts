@@ -15,7 +15,7 @@ export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
- 
+
   async create(createUserDto: CreateUserDto): Promise<User> {
     const newUser = User.create(createUserDto);
     newUser.email = newUser.email.toLowerCase();
@@ -33,7 +33,9 @@ export class UserService {
       const allUsers: User[] = await this.findAll();
       const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
 
-      userByEmail = allUsersExceptMe.find((x) => x.email === user.email.toLowerCase());
+      userByEmail = allUsersExceptMe.find(
+        (x) => x.email === user.email.toLowerCase(),
+      );
     }
     if (userByEmail) {
       throw new ConflictException(
@@ -47,14 +49,15 @@ export class UserService {
 
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne(id);
-    if (!user)
-      throw new NotFoundException(`User ID: '${id}' not found`);
+    if (!user) throw new NotFoundException(`User ID: '${id}' not found`);
     return user;
   }
 
   async findOneByEmail(email: string): Promise<User> {
     const users: User[] = await this.findAll();
-    const user: User = users.find((x) => x.email.toLowerCase() === email.toLowerCase());
+    const user: User = users.find(
+      (x) => x.email.toLowerCase() === email.toLowerCase(),
+    );
     return user;
   }
 

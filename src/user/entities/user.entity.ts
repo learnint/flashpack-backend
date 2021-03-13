@@ -11,10 +11,10 @@ import * as bcrypt from 'bcrypt';
 import { Group } from 'src/group/entities/group.entity';
 import { GroupMember } from 'src/group/entities/group-member.entity';
 import { StringUtil } from 'src/util/string.util';
+import { UserPack } from 'src/pack/entities/user-pack.entity';
 
 @Entity()
 export class User extends BaseEntity {
-  
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -39,6 +39,9 @@ export class User extends BaseEntity {
   @OneToMany(() => GroupMember, (groupMember) => groupMember.user)
   groupMembers: GroupMember[];
 
+  @OneToMany(() => UserPack, (userPack) => userPack.user)
+  userPacks: UserPack[];
+
   // Take the supplied password and hash + salt it
   @BeforeUpdate()
   @BeforeInsert()
@@ -57,9 +60,8 @@ export class User extends BaseEntity {
   setName() {
     const stringUtil = new StringUtil();
 
-    this.firstName =  stringUtil.makeName(this.firstName);
+    this.firstName = stringUtil.makeName(this.firstName);
     this.lastName = stringUtil.makeName(this.lastName);
     this.email = this.email.toLowerCase().trim();
   }
-
 }

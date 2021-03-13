@@ -14,6 +14,8 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { GroupMember } from './group-member.entity';
+import { GroupPack } from 'src/pack/entities/group-pack.entity';
+import { Pack } from 'src/pack/entities/pack.entity';
 
 @Entity()
 export class Group extends BaseEntity {
@@ -49,6 +51,9 @@ export class Group extends BaseEntity {
 
   @OneToMany(() => GroupMember, (groupMember) => groupMember.group)
   groupMembers: GroupMember[];
+
+  @OneToMany(() => GroupPack, (groupPack) => groupPack.group)
+  groupPacks: GroupPack[];
 
   // Take the supplied password and hash + salt it
   @BeforeUpdate()
