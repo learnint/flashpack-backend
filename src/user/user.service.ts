@@ -17,6 +17,7 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const newUser = User.create(createUserDto);
+    newUser.email = newUser.email.toLowerCase();
     // detect existing email
     await this.detectDuplicate(newUser, newUser.id);
 
@@ -31,7 +32,7 @@ export class UserService {
       const allUsers: User[] = await this.findAll();
       const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
 
-      userByEmail = allUsersExceptMe.find((x) => x.email === user.email);
+      userByEmail = allUsersExceptMe.find((x) => x.email.toLowerCase() === user.email.toLowerCase());
     }
 
     if (userByEmail) {
@@ -50,7 +51,7 @@ export class UserService {
 
   async findOneByEmail(email: string): Promise<User> {
     const users: User[] = await this.findAll();
-    const user: User = users.find((x) => x.email === email);
+    const user: User = users.find((x) => x.email.toLowerCase() === email.toLowerCase());
     return user;
   }
 
@@ -66,6 +67,7 @@ export class UserService {
       if (updateUserDto[key] !== user[key] && updateUserDto[key] !== null)
         user[key] = updateUserDto[key];
     }
+    user.email = user.email.toLowerCase();
     return await this.userRepository.save(user);
   }
 
