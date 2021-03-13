@@ -34,6 +34,7 @@ import { GroupDto } from './dto/group.dto';
 import { plainToClass } from 'class-transformer';
 import { GroupMember } from './entities/group-member.entity';
 import { GroupAdmin } from './entities/group-admin.entity';
+import { JoinGroupDto } from './dto/join-group.dto';
 
 @ApiTags('group')
 @Controller('/api/group')
@@ -74,19 +75,26 @@ export class GroupController {
   @UseGuards(AuthGuard('jwt'))
   @Post('/join')
   async joinGroup(
-    @Query('userId', ParseUUIDPipe) userId: string,
-    @Query('groupId', ParseUUIDPipe) groupId: string,
+    @Body() joinGroupDto: JoinGroupDto,
     @Req() req,
   ): Promise<GroupMember> {
     //ensure user is itself or a userAdmin or a GroupAdmin of the group
     const isAdmin = this.groupService.userIsAdmin(req.user.id);
-    const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
+    const isGroupAdmin = this.groupService.isGroupAdmin(
+      req.user.id,
+      joinGroupDto.groupId,
+    );
     if (!isAdmin && !isGroupAdmin) {
-      if (userId !== req.user.id) {
+      if (joinGroupDto.userId !== req.user.id) {
         throw new ForbiddenException();
       }
     }
-    return await this.groupService.joinGroup(userId, groupId);
+
+    return await this.groupService.joinGroup(
+      joinGroupDto.userId,
+      joinGroupDto.groupId,
+      joinGroupDto.password,
+    );
   }
 
   @ApiBadRequestResponse({
@@ -103,16 +111,19 @@ export class GroupController {
   @UseGuards(AuthGuard('jwt'))
   @Post('join-admin')
   async joinGroupAdmin(
-    @Query('userId', ParseUUIDPipe) userId: string,
-    @Query('groupId', ParseUUIDPipe) groupId: string,
+    @Body() joinGroupDto: JoinGroupDto,
     @Req() req,
   ): Promise<GroupAdmin> {
     if (
-      !this.groupService.userIsAdmin(req.user.id) ||
-      !this.groupService.isGroupAdmin(req.user.id, groupId)
+      !this.groupService.userIsAdmin(req.user.id) &&
+      !this.groupService.isGroupAdmin(req.user.id, joinGroupDto.groupId)
     )
       throw new ForbiddenException();
-    return await this.groupService.joinGroupAdmin(userId, groupId);
+    return await this.groupService.joinGroupAdmin(
+      joinGroupDto.userId,
+      joinGroupDto.groupId,
+      joinGroupDto.password,
+    );
   }
 
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
@@ -167,10 +178,11 @@ export class GroupController {
     @Req() req,
   ): Promise<GroupDto> {
     if (
-      !this.groupService.userIsAdmin(req.user.id) ||
-      !this.groupService.isGroupAdmin(req.user.id, id)
+      !(await this.groupService.userIsAdmin(req.user.id)) &&
+      !(await this.groupService.isGroupAdmin(req.user.id, id))
     )
       throw new ForbiddenException();
+
     return plainToClass(
       GroupDto,
       await this.groupService.update(id, updateGroupDto),
@@ -189,7 +201,7 @@ export class GroupController {
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
     if (
-      !this.groupService.userIsAdmin(req.user.id) ||
+      !this.groupService.userIsAdmin(req.user.id) &&
       !this.groupService.isGroupAdmin(req.user.id, id)
     )
       throw new ForbiddenException();

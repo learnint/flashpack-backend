@@ -65,9 +65,9 @@ export class UserController {
   @Get()
   async findAll(@Req() req): Promise<UserDto[]> {
     // Throw Forbidden HTTP error if the user is not an admin;
-    if (!(await this.userService.isAdmin(req.user.id))) {
+    if (!(await this.userService.isAdmin(req.user.id)))
       throw new ForbiddenException();
-    }
+
     return plainToClass(UserDto, await this.userService.findAll());
   }
 
@@ -101,7 +101,13 @@ export class UserController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Req() req,
   ): Promise<UserDto> {
+    if (req.user.id !== id) {
+      if (!(await this.userService.isAdmin(req.user.id)))
+        throw new ForbiddenException();
+    }
+
     return plainToClass(
       UserDto,
       await this.userService.update(id, updateUserDto),

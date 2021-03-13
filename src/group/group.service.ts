@@ -3,9 +3,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -17,7 +17,7 @@ import { plainToClass } from 'class-transformer';
 import { GroupMemberDto } from './dto/group-member.dto';
 import { GroupDto } from './dto/group.dto';
 import { UserDto } from 'src/user/dto/user.dto';
-import { use } from 'passport';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class GroupService {
@@ -42,13 +42,21 @@ export class GroupService {
 
     const savedGroup = await this.groupRepository.save(newGroup);
     if (savedGroup)
-      await this.joinGroupAdmin(newGroup.createdByUser.id, newGroup.id);
+      await this.joinGroupAdmin(
+        newGroup.createdByUser.id,
+        newGroup.id,
+        createGroupDto.password,
+      );
 
     // save the new group and return the details
     return savedGroup;
   }
 
-  async joinGroupAdmin(userId: string, groupId: string): Promise<GroupAdmin> {
+  async joinGroupAdmin(
+    userId: string,
+    groupId: string,
+    password: string,
+  ): Promise<GroupAdmin> {
     const group = await this.findOne(groupId);
     const user = await this.userService.findOne(userId);
 
@@ -58,13 +66,25 @@ export class GroupService {
           ? `User with ID: '${userId}' not found`
           : `Group with ID: '${groupId}' not found`,
       );
+
+    const isPasswordMatch = group
+      ? await bcrypt.compare(password, group.password)
+      : false;
+
+    if (!isPasswordMatch) {
+      throw new UnauthorizedException('Invalid group password');
+    }
     const groupAdmin = GroupAdmin.create();
     groupAdmin.group = group;
     groupAdmin.user = user;
     return await this.groupAdminRepository.save(groupAdmin);
   }
 
-  async joinGroup(userId: string, groupId: string): Promise<GroupMember> {
+  async joinGroup(
+    userId: string,
+    groupId: string,
+    password: string,
+  ): Promise<GroupMember> {
     const group = await this.findOne(groupId);
     const user = await this.userService.findOne(userId);
 
@@ -74,7 +94,13 @@ export class GroupService {
           ? `User with ID: '${userId}' not found`
           : `Group with ID: '${groupId}' not found`,
       );
+    const isPasswordMatch = group
+      ? await bcrypt.compare(password, group.password)
+      : false;
 
+    if (!isPasswordMatch) {
+      throw new UnauthorizedException('Invalid group password');
+    }
     const groupMember = GroupMember.create();
     groupMember.group = group;
     groupMember.user = user;
