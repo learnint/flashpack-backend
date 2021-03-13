@@ -40,6 +40,13 @@ import { User } from './entities/user.entity';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('whoAmI')
+  async whoAmI(@Req() req): Promise<UserDto>{
+    return await this.userService.findOne(req.user.id);
+  }
+
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
