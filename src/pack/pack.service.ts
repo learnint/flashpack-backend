@@ -25,8 +25,6 @@ import { UserPack } from './entities/user-pack.entity';
 export class PackService {
   constructor(
     @InjectRepository(Pack) private readonly packRepository: Repository<Pack>,
-    @InjectRepository(UserPack)
-    private readonly userPackRepository: Repository<UserPack>,
     private readonly userService: UserService,
     private readonly groupService: GroupService,
   ) {}

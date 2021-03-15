@@ -19,9 +19,6 @@ export class CardOption extends BaseEntity {
 
   @ManyToOne(() => Card, (card) => card.options, {
     nullable: false,
-    cascade: true,
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
   })
   card: Card;
 }

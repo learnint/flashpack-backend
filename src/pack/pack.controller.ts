@@ -26,26 +26,17 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Pack } from './entities/pack.entity';
-import { GroupService } from 'src/group/group.service';
 import { PackDto } from './dto/pack.dto';
 import { plainToClass } from 'class-transformer';
 import { CreateUserPackDto } from './dto/create-user-pack.dto';
-import { UserPack } from './entities/user-pack.entity';
 import { CreateGroupPackDto } from './dto/create-group-pack.dto';
 import { PackType, PackTypeInclusive } from './constants';
 import { UpdatePackDto } from './dto/update-pack.dto';
-import { GroupPack } from './entities/group-pack.entity';
-import { GroupPackDto } from './dto/group-pack.dto';
-import { GroupDto } from 'src/group/dto/group.dto';
-import { UserDto } from 'src/user/dto/user.dto';
 
 @ApiTags('pack')
 @Controller('pack')
 export class PackController {
-  constructor(
-    private readonly packService: PackService,
-    private readonly groupService: GroupService,
-  ) {}
+  constructor(private readonly packService: PackService) {}
 
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',

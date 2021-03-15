@@ -15,7 +15,6 @@ export class Card extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
   type: CardType;
 
   @Column()
@@ -30,6 +29,11 @@ export class Card extends BaseEntity {
   })
   pack: Pack;
 
-  @OneToMany(() => CardOption, (option) => option.card, { eager: true })
+  @OneToMany(() => CardOption, (option) => option.card, {
+    eager: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   options: CardOption[];
 }
