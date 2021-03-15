@@ -4,11 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -65,6 +67,12 @@ export class UserService {
 
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
+    if (updateUserDto.password && updateUserDto.newPassword){
+      const isMatch = user ? await bcrypt.compare(updateUserDto.password, user.password) : false;
+      if (!isMatch){
+        throw new ConflictException('original password does not match records');
+      }else updateUserDto.password = updateUserDto.newPassword;
+    }
     if (updateUserDto.email && updateUserDto.email !== '') await this.detectDuplicate(User.create(updateUserDto), id, true);
 
     //update
@@ -89,6 +97,6 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User with ID: '${id}' not found`);
     user.isAdmin = makeAdmin;
-    return await this.update(user.id, user);
+    return await this.update(user.id, plainToClass(UpdateUserDto,user));
   }
 }

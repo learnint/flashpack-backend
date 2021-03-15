@@ -5,20 +5,20 @@ import { UserPackDto } from './user-pack.dto';
 @Exclude()
 export class PackDto {
   @Expose()
-  readonly id: string;
+   id: string;
 
   @Expose()
-  readonly name: string;
+   name: string;
 
   @Expose()
-  readonly timed: boolean;
+   timed: boolean;
 
   @Expose()
-  readonly liveResults: boolean;
+   liveResults: boolean;
 
   @Expose()
-  readonly groupPack: GroupPackDto;
+   groupPack: GroupPackDto;
 
   @Expose()
-  readonly userPack: UserPackDto;
+   userPack: UserPackDto;
 }
