@@ -30,7 +30,7 @@
     "@nestjs/swagger": "^4.7.15",
     "@nestjs/typeorm": "^7.1.5",
     "@types/validator": "^13.1.3",
-    "bcrypt": "^5.0.1",
+    "bcrypt": "https://github.com/kelektiv/node.bcrypt.js.git#master",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "passport": "^0.4.1",
