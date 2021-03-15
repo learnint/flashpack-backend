@@ -6,25 +6,27 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Pack } from './pack.entity';
 
 @Entity()
 export class UserPack extends BaseEntity {
-  @PrimaryColumn({ type: 'uuid', name: 'packId' })
-  @OneToOne(() => Pack, {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @OneToOne(() => Pack, (pack) => pack.userPack, {
     nullable: false,
-    onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
   @JoinColumn()
   pack: Pack;
 
-  @PrimaryColumn({ type: 'uuid', name: 'userId' })
   @ManyToOne(() => User, (user) => user.userPacks, {
     nullable: false,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
+    eager: true,
   })
   user: User;
 }

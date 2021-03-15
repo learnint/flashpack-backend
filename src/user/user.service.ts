@@ -34,7 +34,7 @@ export class UserService {
       const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
 
       userByEmail = allUsersExceptMe.find(
-        (x) => x.email === user.email.toLowerCase(),
+        (x) => x.email.toLowerCase() === user.email.toLowerCase(),
       );
     }
     if (userByEmail) {
@@ -49,7 +49,6 @@ export class UserService {
 
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne(id);
-    if (!user) throw new NotFoundException(`User ID: '${id}' not found`);
     return user;
   }
 

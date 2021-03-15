@@ -1,5 +1,7 @@
 import {
   BaseEntity,
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   Entity,
   JoinColumn,
@@ -23,19 +25,38 @@ export class Pack extends BaseEntity {
   @Column('boolean')
   liveResults: boolean;
 
-  @OneToOne(() => GroupPack, {
+  @Column('int')
+  totalTime: number;
+
+  @OneToOne(() => GroupPack, (groupPack) => groupPack.pack, {
     nullable: true,
-    onUpdate: 'CASCADE',
+    cascade: true,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
     eager: true,
   })
   groupPack: GroupPack;
 
-  @OneToOne(() => UserPack, {
+  @OneToOne(() => UserPack, (userPack) => userPack.pack, {
     nullable: true,
-    onUpdate: 'CASCADE',
+    cascade: true,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
     eager: true,
   })
   userPack: UserPack;
+
+  @BeforeUpdate()
+  @BeforeInsert()
+  setDefaults() {
+    this.totalTime && this.totalTime >= 300
+      ? (this.totalTime = this.totalTime)
+      : (this.totalTime = 3600);
+
+    this.liveResults
+      ? (this.liveResults = this.liveResults)
+      : (this.liveResults = false);
+
+    this.timed ? (this.timed = this.timed) : (this.timed = false);
+  }
 }

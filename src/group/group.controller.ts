@@ -151,9 +151,11 @@ export class GroupController {
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<GroupDto> {
-    return await this.groupService.createGroupDto(
+    const user = await this.groupService.createGroupDto(
       await this.groupService.findOne(id),
     );
+    if (!user) throw new NotFoundException(`User with id: '${id}' not found`);
+    return user;
   }
 
   @ApiForbiddenResponse({ description: 'User is forbidden' })

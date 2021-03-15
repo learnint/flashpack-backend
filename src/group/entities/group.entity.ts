@@ -16,6 +16,7 @@ import { UserService } from 'src/user/user.service';
 import { GroupMember } from './group-member.entity';
 import { GroupPack } from 'src/pack/entities/group-pack.entity';
 import { Pack } from 'src/pack/entities/pack.entity';
+import { StringUtil } from 'src/util/string.util';
 
 @Entity()
 export class Group extends BaseEntity {
@@ -61,5 +62,13 @@ export class Group extends BaseEntity {
   async hashPassword() {
     const saltRounds = 10;
     this.password = await bcrypt.hash(this.password, saltRounds);
+  }
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  setName() {
+    const stringUtil = new StringUtil();
+
+    this.name = stringUtil.makeName(this.name);
   }
 }

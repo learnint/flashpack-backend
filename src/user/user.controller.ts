@@ -14,6 +14,7 @@ import {
   Patch,
   ParseBoolPipe,
   Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -87,7 +88,9 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserDto> {
-    return plainToClass(UserDto, await this.userService.findOne(id));
+    const user = plainToClass(UserDto, await this.userService.findOne(id));
+    if (!user) throw new NotFoundException(`User ID: '${id}' not found`);
+    return user;
   }
 
   @ApiOkResponse({ description: 'Successfully updated User', type: User })

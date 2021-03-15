@@ -60,8 +60,12 @@ export class User extends BaseEntity {
   setName() {
     const stringUtil = new StringUtil();
 
-    this.firstName = stringUtil.makeName(this.firstName);
-    this.lastName = stringUtil.makeName(this.lastName);
-    this.email = this.email.toLowerCase().trim();
+    this.firstName = this.firstName
+      ? stringUtil.makeName(this.firstName)
+      : this.firstName;
+    this.lastName = this.lastName
+      ? stringUtil.makeName(this.lastName)
+      : this.lastName;
+    this.email = this.email ? this.email.toLowerCase().trim() : this.email;
   }
 }

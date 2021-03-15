@@ -1,18 +1,17 @@
-import { PartialType } from '@nestjs/mapped-types';
 import { Exclude, Expose } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsUUID,
   Length,
   Max,
   Min,
 } from 'class-validator';
-import { CreateUserPackDto } from './create-user-pack.dto';
 
 @Exclude()
-export class UpdatePackDto {
+export class CreateGroupPackDto {
   @IsNotEmpty()
   @Length(3, 50)
   @Expose()
@@ -34,4 +33,8 @@ export class UpdatePackDto {
   @IsOptional()
   @Expose()
   liveResults: boolean;
+
+  @IsUUID()
+  @Expose()
+  groupId: string;
 }
