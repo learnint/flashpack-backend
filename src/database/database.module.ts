@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CardOption } from 'src/card/entities/card-options.entity';
+import { Card } from 'src/card/entities/card.entity';
 import { GroupAdmin } from 'src/group/entities/group-admin.entity';
 import { GroupMember } from 'src/group/entities/group-member.entity';
 import { Group } from 'src/group/entities/group.entity';
@@ -26,6 +28,8 @@ import { User } from 'src/user/entities/user.entity';
         UserPack,
         Pack,
         GroupPack,
+        Card,
+        CardOption,
       ],
     }),
   ],

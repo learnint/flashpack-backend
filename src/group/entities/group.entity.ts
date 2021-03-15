@@ -61,7 +61,9 @@ export class Group extends BaseEntity {
   @BeforeInsert()
   async hashPassword() {
     const saltRounds = 10;
-    this.password = this.password ? await bcrypt.hash(this.password, saltRounds): this.password;
+    this.password = this.password
+      ? await bcrypt.hash(this.password, saltRounds)
+      : this.password;
   }
 
   @BeforeInsert()
@@ -69,6 +71,6 @@ export class Group extends BaseEntity {
   setName() {
     const stringUtil = new StringUtil();
 
-    this.name = this.name ? stringUtil.makeName(this.name): this.name;
+    this.name = this.name ? stringUtil.makeName(this.name) : this.name;
   }
 }

@@ -7,9 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { GroupModule } from './group/group.module';
 import { PackModule } from './pack/pack.module';
 import { StringUtil } from './util/string.util';
+import { CardModule } from './card/card.module';
 
 @Module({
-  imports: [DatabaseModule, UserModule, AuthModule, GroupModule, PackModule],
+  imports: [DatabaseModule, UserModule, AuthModule, GroupModule, PackModule, CardModule],
   controllers: [AppController],
   providers: [AppService, StringUtil],
 })

@@ -1,14 +1,8 @@
 import { User } from 'src/user/entities/user.entity';
 import {
   Entity,
-  Column,
-  PrimaryGeneratedColumn,
   BaseEntity,
-  BeforeInsert,
-  BeforeUpdate,
   ManyToOne,
-  Generated,
-  CreateDateColumn,
   PrimaryColumn,
 } from 'typeorm';
 import { Group } from './group.entity';

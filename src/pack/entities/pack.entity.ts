@@ -1,3 +1,4 @@
+import { Card } from 'src/card/entities/card.entity';
 import {
   BaseEntity,
   BeforeInsert,
@@ -5,6 +6,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -45,6 +47,9 @@ export class Pack extends BaseEntity {
     eager: true,
   })
   userPack: UserPack;
+
+  @OneToMany(() => Card, (card) => card.pack)
+  cards: Card[];
 
   @BeforeUpdate()
   @BeforeInsert()
