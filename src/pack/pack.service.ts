@@ -15,7 +15,7 @@ import { Repository } from 'typeorm';
 import { PackType } from './constants';
 import { CreateGroupPackDto } from './dto/create-group-pack.dto';
 import { CreateUserPackDto } from './dto/create-user-pack.dto';
-import { PackDto } from './dto/pack-dto';
+import { PackDto } from './dto/pack.dto';
 import { UpdatePackDto } from './dto/update-pack.dto';
 import { GroupPack } from './entities/group-pack.entity';
 import { Pack } from './entities/pack.entity';

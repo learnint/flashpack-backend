@@ -15,7 +15,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth/auth.service';
-import { LoginDto } from './user/dto/login-dto';
+import { LoginDto } from './user/dto/login.dto';
 
 @ApiTags('login')
 @Controller('/api')
@@ -36,6 +36,6 @@ export class AppController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Request() req) {
-    return this.authService.login(req.user);
+    return await this.authService.login(req.user);
   }
 }
