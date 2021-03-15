@@ -32,14 +32,11 @@ export class PackService {
   ) {}
 
   async detectType(pack: Pack): Promise<PackType> {
-    // const type: PackType = (await this.userService.findOne(id))
-    //   ? PackType.User
-    //   : (await this.groupService.findOne(id))
-    //   ? PackType.Group
-    //   : null;
-    const type = pack.userPack ? PackType.User : PackType.Group;
+    let type: PackType;
+    if (pack.userPack || pack.groupPack)
+      type = pack.userPack ? PackType.User : PackType.Group;
 
-    return type;
+    return type || undefined;
   }
 
   async createUserPack(createPackDto: CreateUserPackDto): Promise<PackDto> {
