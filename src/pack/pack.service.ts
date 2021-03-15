@@ -151,7 +151,7 @@ export class PackService {
         userId,
         typeId,
       );
-      if (!isGroupAdmin && !userIsAdmin && !isGroupMember) throw new ForbiddenException();
+      if (!isGroupAdmin && !userIsAdmin) throw new ForbiddenException();
     }
   }
 }
