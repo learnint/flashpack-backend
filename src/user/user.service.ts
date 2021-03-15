@@ -65,14 +65,13 @@ export class UserService {
 
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
-    await this.detectDuplicate(User.create(updateUserDto), id, true);
+    if (updateUserDto.email && updateUserDto.email !== '') await this.detectDuplicate(User.create(updateUserDto), id, true);
 
     //update
     for (const key in updateUserDto) {
       if (updateUserDto[key] !== user[key] && updateUserDto[key] !== null)
         user[key] = updateUserDto[key];
     }
-    user.email = user.email.toLowerCase();
     return await this.userRepository.save(user);
   }
 

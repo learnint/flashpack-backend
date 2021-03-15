@@ -5,16 +5,19 @@ import { CreateUserDto } from './create-user.dto';
 
 @Exclude()
 export class UpdateUserDto {
-  @IsNotEmpty()
+
+  @Length(3,30)
+  @IsOptional()
   @Expose()
   readonly firstName: string;
 
-  @IsNotEmpty()
-  @Expose()
+  @IsOptional()
+  @Length(3,30)
+  @Expose() 
   readonly lastName: string;
 
   @IsEmail()
-  @IsNotEmpty()
+  @IsOptional()
   @Expose()
   readonly email: string;
 
