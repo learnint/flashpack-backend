@@ -147,10 +147,6 @@ export class PackService {
 
     if (type === PackType.Group) {
       const isGroupAdmin = await this.groupService.isGroupAdmin(userId, typeId);
-      const isGroupMember = await this.groupService.isGroupMember(
-        userId,
-        typeId,
-      );
       if (!isGroupAdmin && !userIsAdmin) throw new ForbiddenException();
     }
   }
