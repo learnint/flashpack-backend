@@ -149,11 +149,20 @@ export class GroupService {
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
     await this.detectDuplicate(Group.create(updateGroupDto), id, true);
 
+    if (updateGroupDto.password && updateGroupDto.newPassword){
+      const isMatch = group ? await bcrypt.compare(updateGroupDto.password, group.password) : false;
+      if (!isMatch){
+        throw new ConflictException('original password does not match records');
+      }else updateGroupDto.password = updateGroupDto.newPassword;
+    }
+    
     //update
     for (const key in updateGroupDto) {
       if (updateGroupDto[key] !== group[key] && updateGroupDto[key] !== null)
         group[key] = updateGroupDto[key];
     }
+
+
     return await this.groupRepository.save(group);
   }
 

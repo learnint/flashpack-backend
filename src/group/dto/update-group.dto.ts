@@ -15,6 +15,11 @@ export class UpdateGroupDto {
   @Expose()
   password: string;
 
+  @Length(6, 30)
+  @IsOptional()
+  @Expose()
+  newPassword: string;
+
   @Length(0, 500)
   @Expose()
   @IsOptional()
