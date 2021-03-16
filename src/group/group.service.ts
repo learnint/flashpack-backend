@@ -17,6 +17,7 @@ import { GroupMemberDto } from './dto/group-member.dto';
 import { GroupDto } from './dto/group.dto';
 import { UserDto } from 'src/user/dto/user.dto';
 import * as bcrypt from 'bcrypt';
+import { StringUtil } from 'src/util/string.util';
 
 @Injectable()
 export class GroupService {
@@ -137,9 +138,9 @@ export class GroupService {
   }
 
   async findOneByName(name: string): Promise<Group> {
-    const groups: Group[] = await this.findAll();
-    const group: Group = groups.find((x) => x.name.toLowerCase() === name.toLowerCase());
-    return group;
+    const stringUtil: StringUtil = new StringUtil();
+    const group = await this.groupRepository.findOne({ where: { name: stringUtil.makeName(name) } });
+    return group || undefined;
   }
 
   async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
