@@ -119,7 +119,7 @@ export class PackController {
   @ApiBearerAuth()
   @ApiQuery({ name: 'type', enum: PackType })
   @UseGuards(AuthGuard('jwt'))
-  @Get('/user-group/:id')
+  @Get('/type/:id')
   async findAllForUserOrGroup(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('type') type: PackType,
