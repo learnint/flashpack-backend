@@ -8,7 +8,6 @@ import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
@@ -56,10 +55,9 @@ export class UserService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const users: User[] = await this.findAll();
-    const user: User = users.find(
-      (x) => x.email.toLowerCase() === email.toLowerCase(),
-    );
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase() },
+    });
     return user;
   }
 
@@ -87,6 +85,7 @@ export class UserService {
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
     if (updateUserPasswordDto.password && updateUserPasswordDto.newPassword) {
+      user.password = updateUserPasswordDto.newPassword;
       const isMatch = user
         ? await bcrypt.compare(updateUserPasswordDto.password, user.password)
         : false;
@@ -94,7 +93,6 @@ export class UserService {
         throw new ConflictException('original password does not match records');
       }
     }
-    user.password = updateUserPasswordDto.newPassword;
     //update
     return await this.userRepository.save(user);
   }
