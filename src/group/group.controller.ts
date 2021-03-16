@@ -109,7 +109,7 @@ export class GroupController {
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post('join-admin')
+  @Post('joinAdmin')
   async joinGroupAdmin(
     @Body() joinGroupDto: JoinGroupDto,
     @Req() req,

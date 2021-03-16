@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group } from './entities/group.entity';
@@ -17,6 +17,7 @@ import { GroupMemberDto } from './dto/group-member.dto';
 import { GroupDto } from './dto/group.dto';
 import { UserDto } from 'src/user/dto/user.dto';
 import * as bcrypt from 'bcrypt';
+import { StringUtil } from 'src/util/string.util';
 
 @Injectable()
 export class GroupService {
@@ -110,16 +111,16 @@ export class GroupService {
   }
 
   private async detectDuplicate(group: Group, id: string, isUpdate = false) {
-    let groupByEmail = await this.findOneByName(group.name);
+    const stringUtil: StringUtil = new StringUtil();
+    let groupByEmail;
 
     if (isUpdate) {
-      const allGroups: Group[] = await this.findAll();
-      const allGroupsExceptMe = allGroups.filter((x) => x.id !== id);
+      groupByEmail = await this.groupRepository.findOne(
+        { where: { 
+          id: Not(id), name: stringUtil.makeName(group.name)
+         } });
+    }else groupByEmail = await this.findOneByName(group.name);
 
-      groupByEmail = allGroupsExceptMe.find(
-        (x) => x.name.toLowerCase() === group.name.toLowerCase(),
-      );
-    }
     if (groupByEmail) {
       throw new ConflictException(
         `A Group with the name '${group.name}' already exists.`,
@@ -137,9 +138,9 @@ export class GroupService {
   }
 
   async findOneByName(name: string): Promise<Group> {
-    const groups: Group[] = await this.findAll();
-    const group: Group = groups.find((x) => x.name === name);
-    return group;
+    const stringUtil: StringUtil = new StringUtil();
+    const group = await this.groupRepository.findOne({ where: { name: stringUtil.makeName(name) } });
+    return group || undefined;
   }
 
   async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
@@ -161,80 +162,52 @@ export class GroupService {
       if (updateGroupDto[key] !== group[key] && updateGroupDto[key] !== null)
         group[key] = updateGroupDto[key];
     }
-
-
     return await this.groupRepository.save(group);
   }
 
   async remove(id: string): Promise<void> {
+    const group = await this.findOne(id);
+    if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`)
     await this.groupRepository.delete(id);
   }
 
   async findGroupMembers(groupId: string): Promise<GroupMemberDto[]> {
-    console.log('inside findgroupmembers');
-    const groupMembers = (await this.groupMemberRepository.find()).filter(
-      (x) => x.group.id === groupId,
-    );
-    console.log(groupMembers);
-    const dto: GroupMemberDto[] = [];
-    if (groupMembers) {
-      for (const member of groupMembers) {
-        const groupMemberDto = new GroupMemberDto();
-        groupMemberDto.group = plainToClass(
-          GroupDto,
-          await this.findOne(member.group.id),
-        );
-        groupMemberDto.user = plainToClass(
-          UserDto,
-          await this.userService.findOne(member.user.id),
-        );
-        dto.push(groupMemberDto);
-      }
-    }
-    return dto;
+    const groupMembers = await this.groupMemberRepository.find({ where: {group: groupId}, relations: ["group","user"]});
+    return plainToClass(GroupMemberDto, groupMembers);
   }
 
   //prepares an array of GroupDto objects
   async createGroupDtoArray(groups: Group[]): Promise<GroupDto[]> {
-    console.log("creating dto array");
     const groupDtoArr: GroupDto[] = [];
     for (const group of groups) {
       groupDtoArr.push(await this.createGroupDto(group));
     }
-
-    console.log(groupDtoArr);
     return groupDtoArr;
   }
 
   //prepares a GroupDto object based off of a Group.
   // creates the dto property values for 'memberNames' and 'memberCount'
   async createGroupDto(group: Group): Promise<GroupDto> {
-    console.log('inside createGroupDto');
     const groupDto = plainToClass(GroupDto, group);
     const groupMembers = await this.findGroupMembers(group.id);
-    console.log(groupMembers);
     const memberNames: string[] = [];
 
     for (const member of groupMembers) {
       const fullName = `${member.user.firstName.trim()} ${member.user.lastName.trim()}`;
       memberNames.push(fullName);
     }
-    console.log(memberNames);
-    groupDto.memberNames = memberNames;
+    groupDto.memberNames = memberNames.sort();
     groupDto.memberCount = groupDto.memberNames.length;
-    console.log(groupDto);
     return groupDto;
   }
 
   async leaveGroup(userId: string, groupId: string): Promise<void> {
-    const groupMember = (await this.groupMemberRepository.find()).find(
-      (x) => x.group.id === groupId && x.user.id === userId,
-    );
+    const groupMember = await this.groupMemberRepository.find({ where: { group: groupId, user: userId } });
     if (!groupMember)
       throw new NotFoundException(
         `No Group member with group ID: '${groupId}' and userId: '${userId}' found`,
       );
-    await this.groupMemberRepository.delete(groupMember);
+    await this.groupMemberRepository.remove(groupMember);
   }
 
   async userIsAdmin(id: string): Promise<boolean> {
@@ -242,18 +215,20 @@ export class GroupService {
   }
 
   async isGroupAdmin(userId: string, groupId: string): Promise<boolean> {
-    const groupAdmin = (await this.groupAdminRepository.find()).find(
-      (x) => x.user.toString() === userId && x.group.toString() === groupId,
-    );
-
+    const groupAdmin = await this.groupAdminRepository.findOne({ 
+      where: { 
+        user: userId,
+        group: groupId 
+      }});
     return groupAdmin ? true : false;
-  }
+  } 
 
   async isGroupMember (userId: string, groupId: string): Promise<boolean> {
-    const groupMember = (await this.groupMemberRepository.find()).find(
-      (x) => x.user.id === userId && x.group.id === groupId,
-    );
-
+    const groupMember = await this.groupMemberRepository.findOne({ 
+      where: { 
+        user: userId,
+        group: groupId 
+      }});
     return groupMember ? true : false;
   }
 }
