@@ -138,7 +138,7 @@ export class GroupService {
 
   async findOneByName(name: string): Promise<Group> {
     const groups: Group[] = await this.findAll();
-    const group: Group = groups.find((x) => x.name === name);
+    const group: Group = groups.find((x) => x.name.toLowerCase() === name.toLowerCase());
     return group;
   }
 
