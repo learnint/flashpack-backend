@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group } from './entities/group.entity';
@@ -111,16 +111,16 @@ export class GroupService {
   }
 
   private async detectDuplicate(group: Group, id: string, isUpdate = false) {
-    let groupByEmail = await this.findOneByName(group.name);
+    const stringUtil: StringUtil = new StringUtil();
+    let groupByEmail;
 
     if (isUpdate) {
-      const allGroups: Group[] = await this.findAll();
-      const allGroupsExceptMe = allGroups.filter((x) => x.id !== id);
+      groupByEmail = await this.groupRepository.findOne(
+        { where: { 
+          id: Not(id), name: stringUtil.makeName(group.name)
+         } });
+    }else groupByEmail = await this.findOneByName(group.name);
 
-      groupByEmail = allGroupsExceptMe.find(
-        (x) => x.name.toLowerCase() === group.name.toLowerCase(),
-      );
-    }
     if (groupByEmail) {
       throw new ConflictException(
         `A Group with the name '${group.name}' already exists.`,
