@@ -33,7 +33,7 @@ export class UserService {
 
     if (isUpdate) {
       userByEmail = await this.userRepository.findOne({
-        where: { id: Not(id) },
+        where: { id: Not(id), email: user.email.toLowerCase() },
       });
     }
     if (userByEmail) {
