@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -32,12 +32,9 @@ export class UserService {
     let userByEmail = await this.findOneByEmail(user.email);
 
     if (isUpdate) {
-      const allUsers: User[] = await this.findAll();
-      const allUsersExceptMe = allUsers.filter((x) => x.id !== id);
-
-      userByEmail = allUsersExceptMe.find(
-        (x) => x.email.toLowerCase() === user.email.toLowerCase(),
-      );
+      userByEmail = await this.userRepository.findOne({
+        where: { id: Not(id) },
+      });
     }
     if (userByEmail) {
       throw new ConflictException(
