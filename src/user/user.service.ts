@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 
 @Injectable()
 export class UserService {
@@ -67,19 +68,34 @@ export class UserService {
 
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
-    if (updateUserDto.password && updateUserDto.newPassword){
-      const isMatch = user ? await bcrypt.compare(updateUserDto.password, user.password) : false;
-      if (!isMatch){
-        throw new ConflictException('original password does not match records');
-      }else updateUserDto.password = updateUserDto.newPassword;
-    }
-    if (updateUserDto.email && updateUserDto.email !== '') await this.detectDuplicate(User.create(updateUserDto), id, true);
+    if (updateUserDto.email && updateUserDto.email !== '')
+      await this.detectDuplicate(User.create(updateUserDto), id, true);
 
     //update
     for (const key in updateUserDto) {
       if (updateUserDto[key] !== user[key] && updateUserDto[key] !== null)
         user[key] = updateUserDto[key];
     }
+    return await this.userRepository.save(user);
+  }
+
+  async updateUserPassword(
+    id: string,
+    updateUserPasswordDto: UpdateUserPasswordDto,
+  ): Promise<User> {
+    const user = await this.userRepository.findOne(id);
+    //Not found and conflict exceptions
+    if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
+    if (updateUserPasswordDto.password && updateUserPasswordDto.newPassword) {
+      const isMatch = user
+        ? await bcrypt.compare(updateUserPasswordDto.password, user.password)
+        : false;
+      if (!isMatch) {
+        throw new ConflictException('original password does not match records');
+      }
+    }
+    user.password = updateUserPasswordDto.newPassword;
+    //update
     return await this.userRepository.save(user);
   }
 
@@ -97,6 +113,6 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User with ID: '${id}' not found`);
     user.isAdmin = makeAdmin;
-    return await this.update(user.id, plainToClass(UpdateUserDto,user));
+    return await this.update(user.id, plainToClass(UpdateUserDto, user));
   }
 }

@@ -20,14 +20,4 @@ export class UpdateUserDto {
   @IsOptional()
   @Expose()
   readonly email: string;
-
-  @IsOptional()
-  @Length(6, 30)
-  @Expose()
-  password: string;
-
-  @IsOptional()
-  @Length(6, 30)
-  @Expose()
-  readonly newPassword: string;
 }

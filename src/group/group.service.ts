@@ -115,11 +115,13 @@ export class GroupService {
     let groupByEmail;
 
     if (isUpdate) {
-      groupByEmail = await this.groupRepository.findOne(
-        { where: { 
-          id: Not(id), name: stringUtil.makeName(group.name)
-         } });
-    }else groupByEmail = await this.findOneByName(group.name);
+      groupByEmail = await this.groupRepository.findOne({
+        where: {
+          id: Not(id),
+          name: stringUtil.makeName(group.name),
+        },
+      });
+    } else groupByEmail = await this.findOneByName(group.name);
 
     if (groupByEmail) {
       throw new ConflictException(
@@ -139,7 +141,9 @@ export class GroupService {
 
   async findOneByName(name: string): Promise<Group> {
     const stringUtil: StringUtil = new StringUtil();
-    const group = await this.groupRepository.findOne({ where: { name: stringUtil.makeName(name) } });
+    const group = await this.groupRepository.findOne({
+      where: { name: stringUtil.makeName(name) },
+    });
     return group || undefined;
   }
 
@@ -150,13 +154,15 @@ export class GroupService {
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
     await this.detectDuplicate(Group.create(updateGroupDto), id, true);
 
-    if (updateGroupDto.password && updateGroupDto.newPassword){
-      const isMatch = group ? await bcrypt.compare(updateGroupDto.password, group.password) : false;
-      if (!isMatch){
+    if (updateGroupDto.password && updateGroupDto.newPassword) {
+      const isMatch = group
+        ? await bcrypt.compare(updateGroupDto.password, group.password)
+        : false;
+      if (!isMatch) {
         throw new ConflictException('original password does not match records');
-      }else updateGroupDto.password = updateGroupDto.newPassword;
+      } else updateGroupDto.password = updateGroupDto.newPassword;
     }
-    
+
     //update
     for (const key in updateGroupDto) {
       if (updateGroupDto[key] !== group[key] && updateGroupDto[key] !== null)
@@ -167,12 +173,15 @@ export class GroupService {
 
   async remove(id: string): Promise<void> {
     const group = await this.findOne(id);
-    if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`)
+    if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
     await this.groupRepository.delete(id);
   }
 
   async findGroupMembers(groupId: string): Promise<GroupMemberDto[]> {
-    const groupMembers = await this.groupMemberRepository.find({ where: {group: groupId}, relations: ["group","user"]});
+    const groupMembers = await this.groupMemberRepository.find({
+      where: { group: groupId },
+      relations: ['group', 'user'],
+    });
     return plainToClass(GroupMemberDto, groupMembers);
   }
 
@@ -202,7 +211,9 @@ export class GroupService {
   }
 
   async leaveGroup(userId: string, groupId: string): Promise<void> {
-    const groupMember = await this.groupMemberRepository.find({ where: { group: groupId, user: userId } });
+    const groupMember = await this.groupMemberRepository.find({
+      where: { group: groupId, user: userId },
+    });
     if (!groupMember)
       throw new NotFoundException(
         `No Group member with group ID: '${groupId}' and userId: '${userId}' found`,
@@ -215,20 +226,22 @@ export class GroupService {
   }
 
   async isGroupAdmin(userId: string, groupId: string): Promise<boolean> {
-    const groupAdmin = await this.groupAdminRepository.findOne({ 
-      where: { 
+    const groupAdmin = await this.groupAdminRepository.findOne({
+      where: {
         user: userId,
-        group: groupId 
-      }});
+        group: groupId,
+      },
+    });
     return groupAdmin ? true : false;
-  } 
+  }
 
-  async isGroupMember (userId: string, groupId: string): Promise<boolean> {
-    const groupMember = await this.groupMemberRepository.findOne({ 
-      where: { 
+  async isGroupMember(userId: string, groupId: string): Promise<boolean> {
+    const groupMember = await this.groupMemberRepository.findOne({
+      where: {
         user: userId,
-        group: groupId 
-      }});
+        group: groupId,
+      },
+    });
     return groupMember ? true : false;
   }
 }
