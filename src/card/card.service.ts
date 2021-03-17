@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Pack } from 'src/pack/entities/pack.entity';
@@ -20,10 +20,12 @@ export class CardService {
 
   async create(createCardDto: CreateCardDto) {
     const card = Card.create(createCardDto);
-    card.pack = plainToClass(
+    const pack = plainToClass(
       Pack,
       await this.packService.findOne(createCardDto.packId),
     );
+    card.pack = pack ? pack : undefined;
+    if (!card.pack) throw new NotFoundException('Pack does not exist');
     return await this.cardRepository.save(card);
   }
 

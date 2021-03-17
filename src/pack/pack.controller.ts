@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiQuery,
   ApiTags,
@@ -32,9 +33,11 @@ import { CreateUserPackDto } from './dto/create-user-pack.dto';
 import { CreateGroupPackDto } from './dto/create-group-pack.dto';
 import { PackType, PackTypeInclusive } from './constants';
 import { UpdatePackDto } from './dto/update-pack.dto';
+import { UserDto } from 'src/user/dto/user.dto';
+import { GroupDto } from 'src/group/dto/group.dto';
 
 @ApiTags('pack')
-@Controller('pack')
+@Controller('packs')
 export class PackController {
   constructor(private readonly packService: PackService) {}
 
@@ -46,6 +49,7 @@ export class PackController {
   @ApiBadRequestResponse({
     description: 'Model broken somewhere in the request',
   })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
@@ -62,6 +66,7 @@ export class PackController {
     return await this.packService.createGroupPack(createPackDto);
   }
 
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
@@ -86,6 +91,7 @@ export class PackController {
     return await this.packService.createUserPack(createPackDto);
   }
 
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiQuery({ name: 'type', enum: PackTypeInclusive })
@@ -94,19 +100,24 @@ export class PackController {
     @Query('type') type: PackTypeInclusive = PackTypeInclusive.Both,
     @Req() req,
   ): Promise<PackDto[]> {
-    const packs = await this.packService.findAll();
+    let packsFiltered = await this.packService.findAll();
     if (!(await this.packService.userIsAdmin(req.user.id)))
       throw new ForbiddenException();
     switch (type) {
       case PackTypeInclusive.Both:
-        return packs.sort();
+        packsFiltered = packsFiltered.sort();
+        break;
       case PackTypeInclusive.Group:
-        return packs.filter((x) => x.groupPack).sort();
+        packsFiltered = packsFiltered.filter((x) => x.groupPack).sort();
+        break;
       case PackTypeInclusive.User:
-        return packs.filter((x) => x.userPack).sort();
+        packsFiltered = packsFiltered.filter((x) => x.userPack).sort();
+        break;
     }
+    return await this.packService.createPacksDto(packsFiltered);
   }
 
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBearerAuth()
   @ApiQuery({ name: 'type', enum: PackType })
   @UseGuards(AuthGuard('jwt'))
@@ -116,20 +127,11 @@ export class PackController {
     @Query('type') type: PackType,
     @Req() req,
   ) {
-    let packs = await this.packService.findAll();
-    if (type === PackType.User)
-      packs = packs.filter((x) =>
-        x.userPack ? x.userPack.user.id === id : false,
-      );
-    else
-      packs = packs.filter((x) =>
-        x.groupPack ? x.groupPack.group.id === id : false,
-      );
-
-    if (packs.length === 0)
-      throw new NotFoundException(`ID: '${id}' not found for type '${type}'`);
+    const packs = await this.packService.findAllForUserOrGroup(id, type);
+    if (!packs || packs.length === 0)
+      throw new NotFoundException(`ID: '${id}' not found for type: '${type}'`);
     await this.packService.checkForbidden(req.user.id, packs[0]);
-    return packs;
+    return await this.packService.createPacksDto(packs);
   }
 
   @ApiBearerAuth()
@@ -145,7 +147,7 @@ export class PackController {
     // check if forbidden
     await this.packService.checkForbidden(req.user.id, pack);
 
-    return pack;
+    return plainToClass(PackDto, pack);
   }
 
   @ApiBearerAuth()

@@ -28,7 +28,11 @@ export class UserService {
     return await this.userRepository.save(newUser);
   }
 
-  private async detectDuplicate(user: User, id: string, isUpdate = false) {
+  private async detectDuplicate(
+    user: User,
+    id: string,
+    isUpdate = false,
+  ): Promise<void> {
     let userByEmail = await this.findOneByEmail(user.email);
 
     if (isUpdate) {

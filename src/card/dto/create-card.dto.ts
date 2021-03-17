@@ -1,6 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import {
-    IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -9,7 +8,6 @@ import {
   Length,
   ValidateNested,
 } from 'class-validator';
-import { PackDto } from 'src/pack/dto/pack.dto';
 import { CardType } from '../constants';
 
 @Exclude()

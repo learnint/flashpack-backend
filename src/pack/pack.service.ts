@@ -1,8 +1,6 @@
 import {
-  ConflictException,
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,7 +9,7 @@ import { GroupDto } from 'src/group/dto/group.dto';
 import { GroupService } from 'src/group/group.service';
 import { UserDto } from 'src/user/dto/user.dto';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { PackType } from './constants';
 import { CreateGroupPackDto } from './dto/create-group-pack.dto';
 import { CreateUserPackDto } from './dto/create-user-pack.dto';
@@ -25,6 +23,10 @@ import { UserPack } from './entities/user-pack.entity';
 export class PackService {
   constructor(
     @InjectRepository(Pack) private readonly packRepository: Repository<Pack>,
+    @InjectRepository(UserPack)
+    private readonly userPackRepository: Repository<UserPack>,
+    @InjectRepository(GroupPack)
+    private readonly groupPackRepository: Repository<GroupPack>,
     private readonly userService: UserService,
     private readonly groupService: GroupService,
   ) {}
@@ -61,8 +63,15 @@ export class PackService {
     return plainToClass(PackDto, await this.findOne(pack.id));
   }
 
-  async findOne(id: string): Promise<PackDto> {
-    const pack = await this.packRepository.findOne(id);
+  async findOne(id: string): Promise<Pack> {
+    const pack = await this.packRepository.findOne(id, {
+      relations: ['groupPack', 'userPack'],
+    });
+    console.log(pack);
+    return pack;
+  }
+
+  async createPackDto(pack: Pack): Promise<PackDto> {
     const dto = plainToClass(PackDto, pack);
     if (dto) {
       if (dto.userPack)
@@ -74,23 +83,54 @@ export class PackService {
     return dto;
   }
 
-  async findAll(): Promise<PackDto[]> {
-    const packs = await this.packRepository.find();
-    const dtoPacks = plainToClass(PackDto, packs);
-
-    for (const dto of dtoPacks) {
-      if (dto.userPack)
-        dto.userPack.user = plainToClass(UserDto, dto.userPack.user);
-
-      if (dto.groupPack)
-        dto.groupPack.group = plainToClass(GroupDto, dto.groupPack.group);
+  async createPacksDto(packs: Pack[]): Promise<PackDto[]> {
+    const packsDto: PackDto[] = [];
+    for (const s of packs) {
+      packsDto.push(await this.createPackDto(s));
     }
 
-    return dtoPacks;
+    return packsDto;
+  }
+
+  async findAll(): Promise<Pack[]> {
+    const packs = await this.packRepository.find({
+      relations: ['groupPack', 'userPack'],
+    });
+
+    return packs;
+  }
+
+  async findAllForUserOrGroup(id: string, type: PackType): Promise<Pack[]> {
+    const packs: Pack[] = [];
+    switch (type) {
+      case PackType.User: {
+        const userPacks = await this.userPackRepository.find({
+          where: { user: await this.userService.findOne(id) },
+          relations: ['pack'],
+        });
+        for (const userPack of userPacks) {
+          packs.push(plainToClass(Pack, userPack.pack));
+        }
+        break;
+      }
+      case PackType.Group: {
+        const groupPacks = await this.groupPackRepository.find({
+          where: { group: await this.groupService.findOne(id) },
+          relations: ['pack'],
+        });
+        for (const groupPack of groupPacks) {
+          packs.push(plainToClass(Pack, groupPack.pack));
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return packs;
   }
 
   async update(id: string, updatePackDto: UpdatePackDto): Promise<Pack> {
-    const pack = Pack.create(await this.findOne(id));
+    const pack = await this.findOne(id);
     if (!pack) throw new NotFoundException(`Pack with ID: '${id}' not found`);
 
     //update
@@ -109,8 +149,8 @@ export class PackService {
     return await this.userService.isAdmin(id);
   }
 
-  async checkForbidden(userId: string, pack: PackDto, readOnly = true) {
-    const type = await this.detectType(plainToClass(Pack, pack));
+  async checkForbidden(userId: string, pack: Pack, readOnly = true) {
+    const type = await this.detectType(pack);
     const isAdmin = await this.userIsAdmin(userId);
     if (type === PackType.User) {
       if (userId !== pack.userPack.id && !isAdmin)
