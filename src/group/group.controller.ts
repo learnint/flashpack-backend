@@ -36,6 +36,7 @@ import { plainToClass } from 'class-transformer';
 import { GroupMember } from './entities/group-member.entity';
 import { GroupAdmin } from './entities/group-admin.entity';
 import { JoinGroupDto } from './dto/join-group.dto';
+import { GroupMemberDto } from './dto/group-member.dto';
 
 @ApiTags('group')
 @Controller('/api/group')
@@ -80,7 +81,7 @@ export class GroupController {
     @Body() joinGroupDto: JoinGroupDto,
     @Query('id') id: string,
     @Req() req,
-  ): Promise<GroupMember> {
+  ): Promise<GroupMemberDto> {
     //ensure user is itself or a userAdmin or a GroupAdmin of the group
     const isAdmin = this.groupService.userIsAdmin(req.user.id);
     const isGroupAdmin = this.groupService.isGroupAdmin(
@@ -93,11 +94,13 @@ export class GroupController {
       }
     }
 
-    return await this.groupService.joinGroup(
+    const groupMember = await this.groupService.joinGroup(
       id ? id : req.user.id,
       joinGroupDto.groupId,
       joinGroupDto.password,
     );
+
+    return await this.groupService.createGroupMemberDto(groupMember);
   }
 
   @ApiBadRequestResponse({

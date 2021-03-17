@@ -182,7 +182,24 @@ export class GroupService {
       where: { group: groupId },
       relations: ['group', 'user'],
     });
-    return plainToClass(GroupMemberDto, groupMembers);
+    const dto = plainToClass(GroupMemberDto, groupMembers);
+    for (const member of dto){
+      member.group = plainToClass(GroupDto, member.group);
+      member.user = plainToClass(UserDto, member.user);
+    }
+    return dto;
+  }
+
+  async createGroupMemberDto(groupMember: GroupMember): Promise<GroupMemberDto>{
+    const groupId = groupMember.group.id ? groupMember.group.id : groupMember.group.toString();
+    const groupMemberFind = await this.groupMemberRepository.findOne({
+       where: { group: groupId },
+       relations: ['group', 'user'],
+      });
+    const dto =  plainToClass(GroupMemberDto, groupMemberFind);
+    dto.user = plainToClass(UserDto, dto.user);
+    dto.group = await this.createGroupDto(groupMember.group);
+    return dto;
   }
 
   //prepares an array of GroupDto objects
