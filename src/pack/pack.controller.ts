@@ -83,6 +83,8 @@ export class PackController {
     @Body() createPackDto: CreateUserPackDto,
     @Req() req,
   ): Promise<PackDto> {
+    if (!createPackDto.userId) createPackDto.userId = req.user.id;
+    console.log(createPackDto.userId);
     await this.packService.checkForbiddenOnCreate(
       req.user.id,
       createPackDto.userId,

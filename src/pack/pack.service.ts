@@ -34,7 +34,11 @@ export class PackService {
   async detectType(pack: Pack): Promise<PackType> {
     let type: PackType;
     if (pack.userPack || pack.groupPack)
-      type = pack.userPack ? PackType.User : PackType.Group;
+      type = pack.userPack
+        ? PackType.User
+        : pack.groupPack
+        ? PackType.Group
+        : undefined;
 
     return type || undefined;
   }
@@ -48,7 +52,7 @@ export class PackService {
 
     pack.userPack = userPack;
     await this.packRepository.save(pack);
-    return plainToClass(PackDto, await this.findOne(pack.id));
+    return await this.createPackDto(await this.findOne(pack.id));
   }
 
   async createGroupPack(createPackDto: CreateGroupPackDto): Promise<PackDto> {
@@ -60,14 +64,13 @@ export class PackService {
 
     pack.groupPack = groupPack;
     await this.packRepository.save(pack);
-    return plainToClass(PackDto, await this.findOne(pack.id));
+    return await this.createPackDto(await this.findOne(pack.id));
   }
 
   async findOne(id: string): Promise<Pack> {
     const pack = await this.packRepository.findOne(id, {
       relations: ['groupPack', 'userPack'],
     });
-    console.log(pack);
     return pack;
   }
 
@@ -184,5 +187,6 @@ export class PackService {
       const isGroupAdmin = await this.groupService.isGroupAdmin(userId, typeId);
       if (!isGroupAdmin && !userIsAdmin) throw new ForbiddenException();
     }
+
   }
 }

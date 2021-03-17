@@ -25,6 +25,7 @@ import {
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -71,11 +72,13 @@ export class GroupController {
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
+  @ApiQuery({ name: 'id', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post('/join')
   async joinGroup(
     @Body() joinGroupDto: JoinGroupDto,
+    @Query('id') id: string,
     @Req() req,
   ): Promise<GroupMember> {
     //ensure user is itself or a userAdmin or a GroupAdmin of the group
@@ -85,13 +88,13 @@ export class GroupController {
       joinGroupDto.groupId,
     );
     if (!isAdmin && !isGroupAdmin) {
-      if (joinGroupDto.userId !== req.user.id) {
+      if (id && id !== req.user.id) {
         throw new ForbiddenException();
       }
     }
 
     return await this.groupService.joinGroup(
-      joinGroupDto.userId,
+      id ? id : req.user.id,
       joinGroupDto.groupId,
       joinGroupDto.password,
     );
@@ -107,11 +110,13 @@ export class GroupController {
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
+  @ApiQuery({ name: 'id', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Post('joinAdmin')
   async joinGroupAdmin(
     @Body() joinGroupDto: JoinGroupDto,
+    @Query('id') id: string,
     @Req() req,
   ): Promise<GroupAdmin> {
     if (
@@ -120,7 +125,7 @@ export class GroupController {
     )
       throw new ForbiddenException();
     return await this.groupService.joinGroupAdmin(
-      joinGroupDto.userId,
+      id ? id : req.user.id,
       joinGroupDto.groupId,
       joinGroupDto.password,
     );
@@ -219,11 +224,12 @@ export class GroupController {
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
+  @ApiQuery({ name: 'userId', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Delete('leaveGroup/:userId/:groupId')
+  @Delete('leaveGroup/:groupId')
   async leaveGroup(
-    @Param('userId', ParseUUIDPipe) userId: string,
+    @Query('userId') userId: string,
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @Req() req,
   ) {
@@ -231,11 +237,14 @@ export class GroupController {
     const isAdmin = this.groupService.userIsAdmin(req.user.id);
     const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
     if (!isAdmin && !isGroupAdmin) {
-      if (userId !== req.user.id) {
+      if (userId && userId !== req.user.id) {
         throw new ForbiddenException();
       }
     }
 
-    return await this.groupService.leaveGroup(userId, groupId);
+    return await this.groupService.leaveGroup(
+      userId ? userId : req.user.id,
+      groupId,
+    );
   }
 }

@@ -34,6 +34,7 @@ export class CreateUserPackDto {
   @Expose()
   liveResults: boolean;
 
+  @IsOptional()
   @IsUUID()
   @Expose()
   userId: string;
