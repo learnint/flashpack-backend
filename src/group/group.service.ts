@@ -18,6 +18,7 @@ import { GroupDto } from './dto/group.dto';
 import { UserDto } from 'src/user/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { StringUtil } from 'src/util/string.util';
+import { GroupAdminDto } from './dto/group-admin.dto';
 
 @Injectable()
 export class GroupService {
@@ -199,6 +200,18 @@ export class GroupService {
     const dto =  plainToClass(GroupMemberDto, groupMemberFind);
     dto.user = plainToClass(UserDto, dto.user);
     dto.group = await this.createGroupDto(groupMember.group);
+    return dto;
+  }
+
+  async createGroupAdminDto(groupAdmin: GroupAdmin): Promise<GroupAdminDto>{
+    const groupId = groupAdmin.group.id ? groupAdmin.group.id : groupAdmin.group.toString();
+    const groupAdminFind = await this.groupAdminRepository.findOne({
+       where: { group: groupId },
+       relations: ['group', 'user'],
+      });
+    const dto =  plainToClass(GroupAdminDto, groupAdminFind);
+    dto.user = plainToClass(UserDto, dto.user);
+    dto.group = await this.createGroupDto(groupAdmin.group);
     return dto;
   }
 

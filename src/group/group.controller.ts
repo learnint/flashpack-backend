@@ -37,6 +37,7 @@ import { GroupMember } from './entities/group-member.entity';
 import { GroupAdmin } from './entities/group-admin.entity';
 import { JoinGroupDto } from './dto/join-group.dto';
 import { GroupMemberDto } from './dto/group-member.dto';
+import { GroupAdminDto } from './dto/group-admin.dto';
 
 @ApiTags('group')
 @Controller('/api/group')
@@ -121,17 +122,19 @@ export class GroupController {
     @Body() joinGroupDto: JoinGroupDto,
     @Query('id') id: string,
     @Req() req,
-  ): Promise<GroupAdmin> {
+  ): Promise<GroupAdminDto> {
     if (
       !this.groupService.userIsAdmin(req.user.id) &&
       !this.groupService.isGroupAdmin(req.user.id, joinGroupDto.groupId)
     )
       throw new ForbiddenException();
-    return await this.groupService.joinGroupAdmin(
+    const groupAdmin = await this.groupService.joinGroupAdmin(
       id ? id : req.user.id,
       joinGroupDto.groupId,
       joinGroupDto.password,
     );
+
+    return plainToClass(GroupAdminDto, groupAdmin);
   }
 
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
