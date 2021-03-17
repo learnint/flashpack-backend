@@ -134,7 +134,7 @@ export class GroupController {
       joinGroupDto.password,
     );
 
-    return plainToClass(GroupAdminDto, groupAdmin);
+    return await this.groupService.createGroupAdminDto(groupAdmin);
   }
 
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
