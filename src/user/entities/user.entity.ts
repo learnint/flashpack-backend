@@ -6,6 +6,7 @@ import {
   BeforeInsert,
   BeforeUpdate,
   OneToMany,
+  AfterLoad,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Group } from 'src/group/entities/group.entity';
@@ -33,6 +34,8 @@ export class User extends BaseEntity {
   @Column('boolean', { nullable: true })
   isAdmin: boolean;
 
+  private tempPass: String;
+
   @OneToMany(() => Group, (group) => group.createdByUser)
   groups: Group[];
 
@@ -42,12 +45,18 @@ export class User extends BaseEntity {
   @OneToMany(() => UserPack, (userPack) => userPack.user)
   userPacks: UserPack[];
 
+  @AfterLoad()
+  private async loadTempPassword(): Promise<void> {
+    this.tempPass = this.password;
+  }
+
   // Take the supplied password and hash + salt it
   @BeforeUpdate()
   @BeforeInsert()
   async hashPassword() {
     const saltRounds = 10;
-    this.password = this.password ? await bcrypt.hash(this.password, saltRounds): this.password;
+    if (this.tempPass !== this.password)
+      this.password = this.password ? await bcrypt.hash(this.password, saltRounds): this.password;
   }
 
   @BeforeInsert()
