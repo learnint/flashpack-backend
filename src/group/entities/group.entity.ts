@@ -9,6 +9,7 @@ import {
   Generated,
   CreateDateColumn,
   OneToMany,
+  AfterLoad,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/user/entities/user.entity';
@@ -44,6 +45,8 @@ export class Group extends BaseEntity {
   @Column()
   link: string;
 
+  private tempPass: string;
+
   @ManyToOne(() => User, (user) => user.groups, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
@@ -56,12 +59,19 @@ export class Group extends BaseEntity {
   @OneToMany(() => GroupPack, (groupPack) => groupPack.group)
   groupPacks: GroupPack[];
 
+  @AfterLoad()
+  private async loadTempPassword(): Promise<void> {
+    this.tempPass = this.password;
+  }
+
+
   // Take the supplied password and hash + salt it
   @BeforeUpdate()
   @BeforeInsert()
   async hashPassword() {
     const saltRounds = 10;
-    this.password = this.password
+    if (this.tempPass !== this.password)
+      this.password = this.password
       ? await bcrypt.hash(this.password, saltRounds)
       : this.password;
   }
