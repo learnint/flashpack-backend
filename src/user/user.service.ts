@@ -85,7 +85,7 @@ export class UserService {
     const user = await this.userRepository.findOne(id);
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
-    if (updateUserPasswordDto.password && updateUserPasswordDto.newPassword) {
+    if (updateUserPasswordDto.password && updateUserPasswordDto.changePassword) {
       const isMatch = user
         ? await bcrypt.compare(updateUserPasswordDto.password, user.password)
         : false;
@@ -93,7 +93,7 @@ export class UserService {
         throw new ConflictException('original password does not match records');
       }
     }
-    user.password = updateUserPasswordDto.newPassword;
+    user.password = updateUserPasswordDto.changePassword;
     //update
     return await this.userRepository.save(user);
   }

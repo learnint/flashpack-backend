@@ -11,5 +11,5 @@ export class UpdateUserPasswordDto {
   @IsOptional()
   @Length(6, 30)
   @Expose()
-  readonly newPassword: string;
+  readonly changePassword: string;
 }
