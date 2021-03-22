@@ -157,7 +157,7 @@ export class UserController {
   @ApiQuery({ name: 'id', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Patch('user/newPassword')
+  @Patch('user/changePassword')
   async updatePassword(
     @Query('id') id: string,
     @Body() updateUserDto: UpdateUserPasswordDto,

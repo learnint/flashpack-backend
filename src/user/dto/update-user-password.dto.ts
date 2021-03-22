@@ -6,7 +6,7 @@ export class UpdateUserPasswordDto {
   @IsOptional()
   @Length(6, 30)
   @Expose()
-  password: string;
+  oldPassword: string;
 
   @IsOptional()
   @Length(6, 30)
