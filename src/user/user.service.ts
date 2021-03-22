@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
@@ -90,7 +91,7 @@ export class UserService {
         ? await bcrypt.compare(updateUserPasswordDto.oldPassword, user.password)
         : false;
       if (!isMatch) {
-        throw new ConflictException('original password does not match records');
+        throw new UnprocessableEntityException('original password does not match records');
       }
     }
     user.password = updateUserPasswordDto.newPassword;

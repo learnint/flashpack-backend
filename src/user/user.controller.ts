@@ -33,6 +33,7 @@ import {
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { plainToClass } from 'class-transformer';
@@ -142,8 +143,8 @@ export class UserController {
   }
 
   @ApiOkResponse({ description: 'Successfully updated User', type: User })
-  @ApiConflictResponse({
-    description: 'Conflict. Original password does not match records',
+  @ApiUnprocessableEntityResponse({
+    description: 'Original password does not match records',
   })
   @ApiBadRequestResponse({
     description: 'Model broken somewhere in the request',
