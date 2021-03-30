@@ -8,11 +8,6 @@ export class CreateGroupDto {
   @Expose()
   name: string;
 
-  @IsNotEmpty()
-  @Length(6, 30)
-  @Expose()
-  password: string;
-
   @Length(0, 500)
   @Expose()
   @IsOptional()

@@ -1,10 +1,5 @@
 import { User } from 'src/user/entities/user.entity';
-import {
-  Entity,
-  BaseEntity,
-  ManyToOne,
-  PrimaryColumn,
-} from 'typeorm';
+import { Entity, BaseEntity, ManyToOne, PrimaryColumn, Column } from 'typeorm';
 import { Group } from './group.entity';
 
 @Entity()
@@ -26,4 +21,7 @@ export class GroupMember extends BaseEntity {
     eager: true,
   })
   user: User;
+
+  @Column('boolean')
+  accepted: boolean;
 }

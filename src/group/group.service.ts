@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -19,6 +20,7 @@ import { UserDto } from 'src/user/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { StringUtil } from 'src/util/string.util';
 import { GroupAdminDto } from './dto/group-admin.dto';
+import { query } from 'express';
 
 @Injectable()
 export class GroupService {
@@ -45,22 +47,15 @@ export class GroupService {
     newGroup.link = 'http://localhost';
 
     const savedGroup = await this.groupRepository.save(newGroup);
-    if (savedGroup)
-      await this.joinGroupAdmin(
-        newGroup.createdByUser.id,
-        newGroup.id,
-        createGroupDto.password,
-      );
-
+    if (savedGroup) {
+      await this.joinGroupAdmin(newGroup.createdByUser.id, newGroup.id);
+      await this.joinGroup(newGroup.createdByUser.id, newGroup.id, true);
+    }
     // save the new group and return the details
     return savedGroup;
   }
 
-  async joinGroupAdmin(
-    userId: string,
-    groupId: string,
-    password: string,
-  ): Promise<GroupAdmin> {
+  async joinGroupAdmin(userId: string, groupId: string): Promise<GroupAdmin> {
     const group = await this.findOne(groupId);
     const user = await this.userService.findOne(userId);
 
@@ -71,13 +66,6 @@ export class GroupService {
           : `Group with ID: '${groupId}' not found`,
       );
 
-    const isPasswordMatch = group
-      ? await bcrypt.compare(password, group.password)
-      : false;
-
-    if (!isPasswordMatch) {
-      throw new UnauthorizedException('Invalid group password');
-    }
     const groupAdmin = GroupAdmin.create();
     groupAdmin.group = group;
     groupAdmin.user = user;
@@ -87,7 +75,7 @@ export class GroupService {
   async joinGroup(
     userId: string,
     groupId: string,
-    password: string,
+    asCreator = false,
   ): Promise<GroupMember> {
     const group = await this.findOne(groupId);
     const user = await this.userService.findOne(userId);
@@ -98,17 +86,38 @@ export class GroupService {
           ? `User with ID: '${userId}' not found`
           : `Group with ID: '${groupId}' not found`,
       );
-    const isPasswordMatch = group
-      ? await bcrypt.compare(password, group.password)
-      : false;
 
-    if (!isPasswordMatch) {
-      throw new UnauthorizedException('Invalid group password');
-    }
+    const memberExists = await this.groupMemberRepository.findOne({
+      where: { user: userId, group: groupId },
+    });
     const groupMember = GroupMember.create();
+    groupMember.accepted =
+      asCreator && !memberExists
+        ? true
+        : memberExists
+        ? memberExists.accepted
+        : false;
     groupMember.group = group;
     groupMember.user = user;
     return await this.groupMemberRepository.save(groupMember);
+  }
+
+  async acceptJoin(groupId: string, userId: string): Promise<GroupMemberDto> {
+    const groupMember = await this.groupMemberRepository.findOne({
+      where: { user: userId, group: groupId },
+      relations: ['user', 'group'],
+    });
+
+    if (!groupMember)
+      throw new NotFoundException(
+        'Cannot accept an invite to a group you are not invited to join',
+      );
+
+    groupMember.accepted = true;
+
+    return await this.createGroupMemberDto(
+      await this.groupMemberRepository.save(groupMember),
+    );
   }
 
   private async detectDuplicate(group: Group, id: string, isUpdate = false) {
@@ -135,6 +144,16 @@ export class GroupService {
     return await this.groupRepository.find();
   }
 
+  async findAllForUser(userId: string): Promise<Group[]> {
+    const members = await this.groupMemberRepository.find({
+      relations: ['group'],
+      where: { user: userId },
+    });
+    const ids: string[] = [];
+    members.forEach((x) => (x ? ids.push(x.group.id) : x));
+    return await this.groupRepository.findByIds(ids);
+  }
+
   async findOne(id: string): Promise<Group> {
     const user = this.groupRepository.findOne(id);
     return await user;
@@ -155,14 +174,14 @@ export class GroupService {
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
     await this.detectDuplicate(Group.create(updateGroupDto), id, true);
 
-    if (updateGroupDto.password && updateGroupDto.newPassword) {
-      const isMatch = group
-        ? await bcrypt.compare(updateGroupDto.password, group.password)
-        : false;
-      if (!isMatch) {
-        throw new ConflictException('original password does not match records');
-      } else updateGroupDto.password = updateGroupDto.newPassword;
-    }
+    // if (updateGroupDto.password && updateGroupDto.newPassword) {
+    //   const isMatch = group
+    //     ? await bcrypt.compare(updateGroupDto.password, group.password)
+    //     : false;
+    //   if (!isMatch) {
+    //     throw new ConflictException('original password does not match records');
+    //   } else updateGroupDto.password = updateGroupDto.newPassword;
+    // }
 
     //update
     for (const key in updateGroupDto) {
@@ -184,57 +203,92 @@ export class GroupService {
       relations: ['group', 'user'],
     });
     const dto = plainToClass(GroupMemberDto, groupMembers);
-    for (const member of dto){
+    for (const member of dto) {
       member.group = plainToClass(GroupDto, member.group);
       member.user = plainToClass(UserDto, member.user);
     }
     return dto;
   }
 
-  async createGroupMemberDto(groupMember: GroupMember): Promise<GroupMemberDto>{
-    const groupId = groupMember.group.id ? groupMember.group.id : groupMember.group.toString();
+  async createGroupMemberDto(
+    groupMember: GroupMember,
+  ): Promise<GroupMemberDto> {
+    const groupId = groupMember.group.id
+      ? groupMember.group.id
+      : groupMember.group.toString();
+    const userId = groupMember.user.id
+      ? groupMember.user.id
+      : groupMember.user.toString();
     const groupMemberFind = await this.groupMemberRepository.findOne({
-       where: { group: groupId },
-       relations: ['group', 'user'],
-      });
-    const dto =  plainToClass(GroupMemberDto, groupMemberFind);
+      where: {
+        group: groupId,
+        user: userId,
+      },
+      relations: ['group', 'user'],
+    });
+    const dto = plainToClass(GroupMemberDto, groupMemberFind);
     dto.user = plainToClass(UserDto, dto.user);
-    dto.group = await this.createGroupDto(groupMember.group);
+    dto.group = userId
+      ? await this.createGroupDto(groupMember.group, userId)
+      : await this.createGroupDto(groupMember.group);
     return dto;
   }
 
-  async createGroupAdminDto(groupAdmin: GroupAdmin): Promise<GroupAdminDto>{
-    const groupId = groupAdmin.group.id ? groupAdmin.group.id : groupAdmin.group.toString();
+  async createGroupAdminDto(groupAdmin: GroupAdmin): Promise<GroupAdminDto> {
+    const groupId = groupAdmin.group.id
+      ? groupAdmin.group.id
+      : groupAdmin.group.toString();
+    const userId = groupAdmin.user.id
+      ? groupAdmin.user.id
+      : groupAdmin.user.toString();
     const groupAdminFind = await this.groupAdminRepository.findOne({
-       where: { group: groupId },
-       relations: ['group', 'user'],
-      });
-    const dto =  plainToClass(GroupAdminDto, groupAdminFind);
+      where: {
+        group: groupId,
+        user: userId,
+      },
+      relations: ['group', 'user'],
+    });
+    const dto = plainToClass(GroupAdminDto, groupAdminFind);
     dto.user = plainToClass(UserDto, dto.user);
-    dto.group = await this.createGroupDto(groupAdmin.group);
+    dto.group = userId
+      ? await this.createGroupDto(groupAdmin.group, userId)
+      : await this.createGroupDto(groupAdmin.group);
     return dto;
   }
 
   //prepares an array of GroupDto objects
-  async createGroupDtoArray(groups: Group[]): Promise<GroupDto[]> {
+  async createGroupDtoArray(
+    groups: Group[],
+    userId?: string,
+  ): Promise<GroupDto[]> {
     const groupDtoArr: GroupDto[] = [];
     for (const group of groups) {
-      groupDtoArr.push(await this.createGroupDto(group));
+      groupDtoArr.push(
+        userId
+          ? await this.createGroupDto(group, userId)
+          : await this.createGroupDto(group),
+      );
     }
     return groupDtoArr;
   }
 
   //prepares a GroupDto object based off of a Group.
   // creates the dto property values for 'memberNames' and 'memberCount'
-  async createGroupDto(group: Group): Promise<GroupDto> {
+  async createGroupDto(group: Group, userId?: string): Promise<GroupDto> {
     const groupDto = plainToClass(GroupDto, group);
     const groupMembers = await this.findGroupMembers(group.id);
+    const adminMember = await this.groupAdminRepository.findOne({
+      where: { user: userId ? userId : null, group: group.id },
+    });
     const memberNames: string[] = [];
 
     for (const member of groupMembers) {
       const fullName = `${member.user.firstName.trim()} ${member.user.lastName.trim()}`;
       memberNames.push(fullName);
+      if (userId && userId === member.user.id)
+        groupDto.accepted = member.accepted;
     }
+    if (userId) groupDto.isAdmin = adminMember ? true : false;
     groupDto.memberNames = memberNames.sort();
     groupDto.memberCount = groupDto.memberNames.length;
     return groupDto;

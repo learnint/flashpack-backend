@@ -25,4 +25,8 @@ export class GroupDto {
   memberNames: string[];
   @Expose()
   memberCount: number;
+  @Expose()
+  accepted: boolean;
+  @Expose()
+  isAdmin: boolean;
 }

@@ -13,10 +13,8 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/user/entities/user.entity';
-import { UserService } from 'src/user/user.service';
 import { GroupMember } from './group-member.entity';
 import { GroupPack } from 'src/pack/entities/group-pack.entity';
-import { Pack } from 'src/pack/entities/pack.entity';
 import { StringUtil } from 'src/util/string.util';
 
 @Entity()
@@ -40,12 +38,7 @@ export class Group extends BaseEntity {
   createdByName: string;
 
   @Column()
-  password: string;
-
-  @Column()
   link: string;
-
-  private tempPass: string;
 
   @ManyToOne(() => User, (user) => user.groups, {
     onUpdate: 'CASCADE',
@@ -59,28 +52,27 @@ export class Group extends BaseEntity {
   @OneToMany(() => GroupPack, (groupPack) => groupPack.group)
   groupPacks: GroupPack[];
 
-  @AfterLoad()
-  private async loadTempPassword(): Promise<void> {
-    this.tempPass = this.password;
-  }
+  // @AfterLoad()
+  // private async loadTempPassword(): Promise<void> {
+  //   this.tempPass = this.password;
+  // }
 
 
   // Take the supplied password and hash + salt it
-  @BeforeUpdate()
-  @BeforeInsert()
-  async hashPassword() {
-    const saltRounds = 10;
-    if (this.tempPass !== this.password)
-      this.password = this.password
-      ? await bcrypt.hash(this.password, saltRounds)
-      : this.password;
-  }
+  // @BeforeUpdate()
+  // @BeforeInsert()
+  // async hashPassword() {
+  //   const saltRounds = 10;
+  //   if (this.tempPass !== this.password)
+  //     this.password = this.password
+  //     ? await bcrypt.hash(this.password, saltRounds)
+  //     : this.password;
+  // }
 
   @BeforeInsert()
   @BeforeUpdate()
   setName() {
     const stringUtil = new StringUtil();
-
     this.name = this.name ? stringUtil.makeName(this.name) : this.name;
   }
 }

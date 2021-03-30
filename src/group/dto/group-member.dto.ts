@@ -4,4 +4,5 @@ import { GroupDto } from './group.dto';
 export class GroupMemberDto {
   group: GroupDto;
   user: UserDto;
+  accepted: boolean;
 }
