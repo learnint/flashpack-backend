@@ -96,11 +96,11 @@ export class GroupService {
       where: { user: userId, group: groupId },
     });
     const groupMember = GroupMember.create();
-    groupMember.accepted =
+    groupMember.isJoined =
       asCreator && !memberExists
         ? true
         : memberExists
-        ? memberExists.accepted
+        ? memberExists.isJoined
         : false;
     groupMember.group = group;
     groupMember.user = user;
@@ -118,7 +118,7 @@ export class GroupService {
         'Cannot accept an invite to a group you are not invited to join',
       );
 
-    groupMember.accepted = true;
+    groupMember.isJoined = true;
 
     return await this.createGroupMemberDto(
       await this.groupMemberRepository.save(groupMember),
@@ -156,7 +156,9 @@ export class GroupService {
     });
     const ids: string[] = [];
     members.forEach((x) => (x ? ids.push(x.group.id) : x));
-    return await this.groupRepository.findByIds(ids);
+    return await this.groupRepository.findByIds(ids, {
+      relations: ['createdByUser'],
+    });
   }
 
   async findOne(id: string): Promise<Group> {
@@ -278,24 +280,27 @@ export class GroupService {
   }
 
   //prepares a GroupDto object based off of a Group.
-  // creates the dto property values for 'memberNames' and 'memberCount'
+  // creates the dto property values for 'users' and 'memberCount'
   async createGroupDto(group: Group, userId?: string): Promise<GroupDto> {
+    console.log(group);
     const groupDto = plainToClass(GroupDto, group);
     const groupMembers = await this.findGroupMembers(group.id);
     const adminMember = await this.groupAdminRepository.findOne({
       where: { user: userId ? userId : null, group: group.id },
     });
-    const memberNames: string[] = [];
-
+    //const memberNames: string[] = [];
+    const users: UserDto[] = [];
     for (const member of groupMembers) {
-      const fullName = `${member.user.firstName.trim()} ${member.user.lastName.trim()}`;
-      memberNames.push(fullName);
+      users.push(
+        plainToClass(UserDto, await this.userService.findOne(member.user.id)),
+      );
       if (userId && userId === member.user.id)
-        groupDto.accepted = member.accepted;
+        groupDto.isJoined = member.isJoined;
     }
+    groupDto.createdByUserId = group.createdByUser.id;
+    groupDto.users = users;
     if (userId) groupDto.isAdmin = adminMember ? true : false;
-    groupDto.memberNames = memberNames.sort();
-    groupDto.memberCount = groupDto.memberNames.length;
+    groupDto.memberCount = users.length;
     return groupDto;
   }
 

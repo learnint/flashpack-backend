@@ -23,5 +23,5 @@ export class GroupMember extends BaseEntity {
   user: User;
 
   @Column('boolean')
-  accepted: boolean;
+  isJoined: boolean;
 }
