@@ -1,4 +1,5 @@
 import { Card } from 'src/card/entities/card.entity';
+import { StringUtil } from 'src/util/string.util';
 import {
   BaseEntity,
   BeforeInsert,
@@ -62,5 +63,12 @@ export class Pack extends BaseEntity {
       : (this.liveResults = false);
 
     this.timed ? (this.timed = this.timed) : (this.timed = false);
+  }
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  setName() {
+    const stringUtil = new StringUtil();
+    this.name = this.name ? stringUtil.makeName(this.name) : this.name;
   }
 }

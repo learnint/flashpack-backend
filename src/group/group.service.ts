@@ -1,6 +1,8 @@
 import {
   ConflictException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -17,10 +19,10 @@ import { plainToClass } from 'class-transformer';
 import { GroupMemberDto } from './dto/group-member.dto';
 import { GroupDto } from './dto/group.dto';
 import { UserDto } from 'src/user/dto/user.dto';
-import * as bcrypt from 'bcrypt';
 import { StringUtil } from 'src/util/string.util';
 import { GroupAdminDto } from './dto/group-admin.dto';
-import { query } from 'express';
+import { PackService } from 'src/pack/pack.service';
+import { PackType } from 'src/pack/constants';
 
 @Injectable()
 export class GroupService {
@@ -31,7 +33,10 @@ export class GroupService {
     private readonly groupMemberRepository: Repository<GroupMember>,
     @InjectRepository(GroupAdmin)
     private readonly groupAdminRepository: Repository<GroupAdmin>,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    @Inject(forwardRef(() => PackService))
+    private readonly packService: PackService,
   ) {}
 
   async create(
@@ -174,15 +179,6 @@ export class GroupService {
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
     await this.detectDuplicate(Group.create(updateGroupDto), id, true);
 
-    // if (updateGroupDto.password && updateGroupDto.newPassword) {
-    //   const isMatch = group
-    //     ? await bcrypt.compare(updateGroupDto.password, group.password)
-    //     : false;
-    //   if (!isMatch) {
-    //     throw new ConflictException('original password does not match records');
-    //   } else updateGroupDto.password = updateGroupDto.newPassword;
-    // }
-
     //update
     for (const key in updateGroupDto) {
       if (updateGroupDto[key] !== group[key] && updateGroupDto[key] !== null)
@@ -194,7 +190,16 @@ export class GroupService {
   async remove(id: string): Promise<void> {
     const group = await this.findOne(id);
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
+    // also delete any packs connected to the group
+    const packsToDelete = await this.packService.findAllForUserOrGroup(
+      group.id,
+      PackType.Group,
+    );
     await this.groupRepository.delete(id);
+
+    for (const pack of packsToDelete) {
+      await this.packService.remove(pack);
+    }
   }
 
   async findGroupMembers(groupId: string): Promise<GroupMemberDto[]> {

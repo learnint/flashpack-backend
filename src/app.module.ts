@@ -10,7 +10,14 @@ import { StringUtil } from './util/string.util';
 import { CardModule } from './card/card.module';
 
 @Module({
-  imports: [DatabaseModule, UserModule, AuthModule, GroupModule, PackModule, CardModule],
+  imports: [
+    DatabaseModule,
+    UserModule,
+    AuthModule,
+    GroupModule,
+    PackModule,
+    CardModule,
+  ],
   controllers: [AppController],
   providers: [AppService, StringUtil],
 })

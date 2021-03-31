@@ -67,7 +67,7 @@ export class GroupController {
     @Req() req,
   ): Promise<GroupDto> {
     const group = await this.groupService.create(createGroupDto, req.user.id);
-    return await this.groupService.createGroupDto(group, req.user.id); //plainToClass(GroupDto, group);
+    return await this.groupService.createGroupDto(group, req.user.id);
   }
 
   // //directly join the group via group admin or user admin.

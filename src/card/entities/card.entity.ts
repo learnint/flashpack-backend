@@ -31,9 +31,6 @@ export class Card extends BaseEntity {
 
   @OneToMany(() => CardOption, (option) => option.card, {
     eager: true,
-    cascade: true,
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
   })
   options: CardOption[];
 }

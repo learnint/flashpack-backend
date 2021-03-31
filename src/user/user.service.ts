@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -12,11 +14,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { PackType } from 'src/pack/constants';
+import { PackService } from 'src/pack/pack.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @Inject(forwardRef(() => PackService)) private readonly packService: PackService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -86,12 +91,17 @@ export class UserService {
     const user = await this.userRepository.findOne(id);
     //Not found and conflict exceptions
     if (!user) throw new NotFoundException(`User with ID: ${id} not found`);
-    if (updateUserPasswordDto.oldPassword && updateUserPasswordDto.newPassword) {
+    if (
+      updateUserPasswordDto.oldPassword &&
+      updateUserPasswordDto.newPassword
+    ) {
       const isMatch = user
         ? await bcrypt.compare(updateUserPasswordDto.oldPassword, user.password)
         : false;
       if (!isMatch) {
-        throw new UnprocessableEntityException('original password does not match records');
+        throw new UnprocessableEntityException(
+          'original password does not match records',
+        );
       }
     }
     user.password = updateUserPasswordDto.newPassword;
@@ -100,7 +110,20 @@ export class UserService {
   }
 
   async remove(id: string): Promise<void> {
+    const user = await this.findOne(id);
+    if (!user) throw new NotFoundException(`User with ID: '${id}' not found`);
+    // also delete any packs connected to the user
+    const packsToDelete = await this.packService.findAllForUserOrGroup(
+      user.id,
+      PackType.User,
+    );
+  
     await this.userRepository.delete(id);
+
+    for (const pack of packsToDelete) {
+      await this.packService.remove(pack);
+    }
+
   }
 
   async isAdmin(id: string): Promise<boolean> {

@@ -1,5 +1,7 @@
 import {
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -27,8 +29,10 @@ export class PackService {
     private readonly userPackRepository: Repository<UserPack>,
     @InjectRepository(GroupPack)
     private readonly groupPackRepository: Repository<GroupPack>,
-    private readonly userService: UserService,
+    @Inject(forwardRef(() => GroupService))
     private readonly groupService: GroupService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
   ) {}
 
   async detectType(pack: Pack): Promise<PackType> {
@@ -46,6 +50,10 @@ export class PackService {
   async createUserPack(createPackDto: CreateUserPackDto): Promise<PackDto> {
     const pack = Pack.create(createPackDto);
     const user = await this.userService.findOne(createPackDto.userId);
+    if (!user)
+      throw new NotFoundException(
+        `User with id: '${createPackDto.userId}' does not exist`,
+      );
     const userPack = UserPack.create();
     userPack.pack = pack;
     userPack.user = user;
@@ -58,6 +66,10 @@ export class PackService {
   async createGroupPack(createPackDto: CreateGroupPackDto): Promise<PackDto> {
     const pack = Pack.create(createPackDto);
     const group = await this.groupService.findOne(createPackDto.groupId);
+    if (!group)
+      throw new NotFoundException(
+        `Group with id: '${createPackDto.groupId}' does not exist`,
+      );
     const groupPack = GroupPack.create();
     groupPack.pack = pack;
     groupPack.group = group;

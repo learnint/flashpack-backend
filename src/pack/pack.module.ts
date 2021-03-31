@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { PackService } from './pack.service';
 import { PackController } from './pack.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,8 +13,8 @@ import { UserModule } from 'src/user/user.module';
   providers: [PackService],
   imports: [
     TypeOrmModule.forFeature([Pack, UserPack, GroupPack]),
-    GroupModule,
-    UserModule,
+    forwardRef(() => GroupModule),
+    forwardRef(() => UserModule),
   ],
   exports: [PackService],
 })
