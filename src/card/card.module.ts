@@ -5,11 +5,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Card } from './entities/card.entity';
 import { CardOption } from './entities/card-options.entity';
 import { PackModule } from 'src/pack/pack.module';
+import { UserModule } from 'src/user/user.module';
+import { GroupModule } from 'src/group/group.module';
 
 @Module({
   controllers: [CardController],
   providers: [CardService],
-  imports: [TypeOrmModule.forFeature([Card, CardOption]), PackModule],
+  imports: [
+    TypeOrmModule.forFeature([Card, CardOption]),
+    PackModule,
+    UserModule,
+    GroupModule,
+  ],
   exports: [CardService],
 })
 export class CardModule {}

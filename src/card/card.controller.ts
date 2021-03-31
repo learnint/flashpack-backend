@@ -43,7 +43,7 @@ export class CardController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(@Body() createCardDto: CreateCardDto, @Req() req) {
-    return await this.cardService.create(createCardDto);
+    return await this.cardService.create(createCardDto, req.user.id);
   }
 
   @Get()
