@@ -43,7 +43,7 @@ import { InviteDto } from './dto/invite.dto';
 import { UserService } from 'src/user/user.service';
 
 @ApiTags('group')
-@Controller('/api/group')
+@Controller('/api')
 export class GroupController {
   constructor(
     private readonly groupService: GroupService,
@@ -61,7 +61,7 @@ export class GroupController {
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post()
+  @Post('group')
   async create(
     @Body() createGroupDto: CreateGroupDto,
     @Req() req,
@@ -126,7 +126,7 @@ export class GroupController {
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post(':id/users')
+  @Post('group/:id/users')
   async inviteInit(
     @Param('id', ParseUUIDPipe) groupId: string,
     @Body() inviteDto: InviteDto,
@@ -167,7 +167,7 @@ export class GroupController {
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Patch(':id/join')
+  @Patch('group/:id/join')
   async acceptJoin(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req,
@@ -188,7 +188,7 @@ export class GroupController {
   @ApiQuery({ name: 'id', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post('joinAdmin')
+  @Post('group/joinAdmin')
   async joinGroupAdmin(
     @Body() joinGroupDto: JoinGroupDto,
     @Query('id') id: string,
@@ -213,7 +213,7 @@ export class GroupController {
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Get()
+  @Get('groups')
   async findAll(@Req() req): Promise<GroupDto[]> {
     return await this.groupService.createGroupDtoArray(
       await this.groupService.findAllForUser(req.user.id),
@@ -231,7 +231,7 @@ export class GroupController {
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
+  @Get('group/:id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<GroupDto> {
     const group = await this.groupService.findOne(id);
     if (!group) throw new NotFoundException(`Group with id: '${id}' not found`);
@@ -255,7 +255,7 @@ export class GroupController {
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Put(':id')
+  @Put('group/:id')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateGroupDto: UpdateGroupDto,
@@ -282,7 +282,7 @@ export class GroupController {
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Delete(':id')
+  @Delete('group/:id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
     if (
       !this.groupService.userIsAdmin(req.user.id) &&
@@ -304,7 +304,7 @@ export class GroupController {
   @ApiQuery({ name: 'userId', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Delete(':id/leave')
+  @Delete('group/:id/leave')
   async leaveGroup(
     @Query('userId') userId: string,
     @Param('groupId', ParseUUIDPipe) groupId: string,
