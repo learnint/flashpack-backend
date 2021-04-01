@@ -33,9 +33,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Group } from './entities/group.entity';
 import { GroupDto } from './dto/group.dto';
-import { plainToClass } from 'class-transformer';
 import { GroupMember } from './entities/group-member.entity';
-import { GroupAdmin } from './entities/group-admin.entity';
 import { JoinGroupDto } from './dto/join-group.dto';
 import { GroupMemberDto } from './dto/group-member.dto';
 import { GroupAdminDto } from './dto/group-admin.dto';
@@ -272,6 +270,41 @@ export class GroupController {
     );
   }
 
+   //TODO: DELETE - i.e leave group, leave group admin.
+   @ApiBadRequestResponse({
+    description: 'Invalid ID',
+  })
+  @ApiNotFoundResponse({ description: 'Group member not found' })
+  @ApiForbiddenResponse({ description: 'User is forbidden' })
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
+  @ApiQuery({ name: 'userId', required: false })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('group/:id/leave')
+  async leaveGroup(
+    @Query('userId') userId: string,
+    @Param('id', ParseUUIDPipe) groupId: string,
+    @Req() req,
+  ) {
+    console.log('hi');
+    //ensure user is itself or a userAdmin or a GroupAdmin of the group
+    const isAdmin = this.groupService.userIsAdmin(req.user.id);
+    const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
+    if (!isAdmin && !isGroupAdmin) {
+      if (userId && userId !== req.user.id) {
+        throw new ForbiddenException();
+      }
+    }
+
+    return await this.groupService.leaveGroup(
+      //userId ? userId :
+      req.user.id,
+      groupId,
+    );
+  }
+
   @ApiBadRequestResponse({
     description: 'Invalid ID',
   })
@@ -289,38 +322,5 @@ export class GroupController {
     )
       throw new ForbiddenException();
     return await this.groupService.remove(id);
-  }
-
-  //TODO: DELETE - i.e leave group, leave group admin.
-  @ApiBadRequestResponse({
-    description: 'Invalid ID',
-  })
-  @ApiNotFoundResponse({ description: 'Group member not found' })
-  @ApiForbiddenResponse({ description: 'User is forbidden' })
-  @ApiInternalServerErrorResponse({
-    description: 'An internal server error occured',
-  })
-  @ApiQuery({ name: 'userId', required: false })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @Delete('group/:id/leave')
-  async leaveGroup(
-    @Query('userId') userId: string,
-    @Param('groupId', ParseUUIDPipe) groupId: string,
-    @Req() req,
-  ) {
-    //ensure user is itself or a userAdmin or a GroupAdmin of the group
-    const isAdmin = this.groupService.userIsAdmin(req.user.id);
-    const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
-    if (!isAdmin && !isGroupAdmin) {
-      if (userId && userId !== req.user.id) {
-        throw new ForbiddenException();
-      }
-    }
-
-    return await this.groupService.leaveGroup(
-      userId ? userId : req.user.id,
-      groupId,
-    );
   }
 }
