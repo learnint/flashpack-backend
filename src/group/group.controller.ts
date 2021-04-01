@@ -142,10 +142,9 @@ export class GroupController {
     for (const email of inviteDto['emails']) {
       const user = await this.userSerice.findOneByEmail(email);
       if (user) {
+        const join = await this.groupService.joinGroup(user.id, groupId);
         groupMemberDtos.push(
-          await this.groupService.createGroupMemberDto(
-            await this.groupService.joinGroup(user.id, groupId),
-          ),
+          await this.groupService.createGroupMemberDto(join),
         );
       }
     }

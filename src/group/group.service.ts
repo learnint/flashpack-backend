@@ -82,7 +82,9 @@ export class GroupService {
     groupId: string,
     asCreator = false,
   ): Promise<GroupMember> {
-    const group = await this.findOne(groupId);
+    const group = await this.groupRepository.findOne(groupId, {
+      relations: ['createdByUser'],
+    });
     const user = await this.userService.findOne(userId);
 
     if (!group || !user)
@@ -162,8 +164,8 @@ export class GroupService {
   }
 
   async findOne(id: string): Promise<Group> {
-    const user = this.groupRepository.findOne(id);
-    return await user;
+    const group = this.groupRepository.findOne(id);
+    return await group;
   }
 
   async findOneByName(name: string): Promise<Group> {
@@ -234,10 +236,13 @@ export class GroupService {
       relations: ['group', 'user'],
     });
     const dto = plainToClass(GroupMemberDto, groupMemberFind);
+    const group = await this.groupRepository.findOne(groupMember.group.id, {
+      relations: ['createdByUser'],
+    });
     dto.user = plainToClass(UserDto, dto.user);
     dto.group = userId
-      ? await this.createGroupDto(groupMember.group, userId)
-      : await this.createGroupDto(groupMember.group);
+      ? await this.createGroupDto(group, userId)
+      : await this.createGroupDto(group);
     return dto;
   }
 
@@ -282,7 +287,6 @@ export class GroupService {
   //prepares a GroupDto object based off of a Group.
   // creates the dto property values for 'users' and 'memberCount'
   async createGroupDto(group: Group, userId?: string): Promise<GroupDto> {
-    console.log(group);
     const groupDto = plainToClass(GroupDto, group);
     const groupMembers = await this.findGroupMembers(group.id);
     const adminMember = await this.groupAdminRepository.findOne({
@@ -297,7 +301,9 @@ export class GroupService {
       if (userId && userId === member.user.id)
         groupDto.isJoined = member.isJoined;
     }
-    groupDto.createdByUserId = group.createdByUser.id;
+    groupDto.createdByUserId = group.createdByUser.id
+      ? group.createdByUser.id
+      : group.createdByUser.toString();
     groupDto.users = users;
     if (userId) groupDto.isAdmin = adminMember ? true : false;
     groupDto.memberCount = users.length;
