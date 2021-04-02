@@ -13,9 +13,8 @@ import { Pack } from './pack.entity';
 
 @Entity()
 export class GroupPack extends BaseEntity {
-  // @PrimaryGeneratedColumn('uuid')
-  // id: string;
-  @PrimaryColumn({ type: 'uuid', name: 'packId' })
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
   @OneToOne(() => Pack, (pack) => pack.groupPack, {
     nullable: false,
     onDelete: 'CASCADE',
@@ -23,8 +22,7 @@ export class GroupPack extends BaseEntity {
   })
   @JoinColumn()
   pack: Pack;
-
-  @PrimaryColumn({ type: 'uuid', name: 'groupId' })
+  
   @ManyToOne(() => Group, (group) => group.groupPacks, {
     nullable: false,
     onUpdate: 'CASCADE',

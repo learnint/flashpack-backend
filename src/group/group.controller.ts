@@ -229,11 +229,13 @@ export class GroupController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get('group/:id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<GroupDto> {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req,
+  ): Promise<GroupDto> {
     const group = await this.groupService.findOne(id);
     if (!group) throw new NotFoundException(`Group with id: '${id}' not found`);
-    const groupDto = await this.groupService.createGroupDto(group);
-
+    const groupDto = await this.groupService.createGroupDto(group, req.user.id);
     return groupDto;
   }
 
@@ -270,8 +272,8 @@ export class GroupController {
     );
   }
 
-   //TODO: DELETE - i.e leave group, leave group admin.
-   @ApiBadRequestResponse({
+  //TODO: DELETE - i.e leave group, leave group admin.
+  @ApiBadRequestResponse({
     description: 'Invalid ID',
   })
   @ApiNotFoundResponse({ description: 'Group member not found' })
@@ -288,7 +290,6 @@ export class GroupController {
     @Param('id', ParseUUIDPipe) groupId: string,
     @Req() req,
   ) {
-    console.log('hi');
     //ensure user is itself or a userAdmin or a GroupAdmin of the group
     const isAdmin = this.groupService.userIsAdmin(req.user.id);
     const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);

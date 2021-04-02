@@ -148,7 +148,7 @@ export class PackController {
     // check if forbidden
     await this.packService.checkForbidden(req.user.id, pack);
 
-    return plainToClass(PackDto, pack);
+    return await this.packService.createPackDto(pack);
   }
 
   @ApiBearerAuth()
@@ -159,18 +159,15 @@ export class PackController {
     @Body() updatePackDto: UpdatePackDto,
     @Req() req,
   ): Promise<PackDto> {
-    //check forbidden
-    await this.packService.checkForbidden(
-      req.user.id,
-      await this.packService.findOne(id),
-      false,
-    );
 
-    const dto = plainToClass(
-      PackDto,
+    const pack = await this.packService.findOne(id);
+    if (!pack) throw new NotFoundException(`Pack with ID: '${id}' not found`);
+    //check forbidden
+    await this.packService.checkForbidden(req.user.id, pack, false);
+
+    const dto = await this.packService.createPackDto(
       await this.packService.update(id, updatePackDto),
     );
-
     return dto;
   }
 
@@ -183,7 +180,6 @@ export class PackController {
       throw new NotFoundException(`Pack with ID: '${id}' not found`);
     //check if forbidden should be thrown
     await this.packService.checkForbidden(req.user.id, packDto, false);
-    const pack = Pack.create(packDto);
-    return await this.packService.remove(pack);
+    return await this.packService.remove(packDto);
   }
 }

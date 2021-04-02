@@ -153,6 +153,7 @@ export class PackService {
       if (updatePackDto[key] !== pack[key] && updatePackDto[key] !== null)
         pack[key] = updatePackDto[key];
     }
+    console.log(pack);
     return await this.packRepository.save(pack);
   }
 

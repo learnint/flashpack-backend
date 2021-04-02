@@ -164,7 +164,9 @@ export class GroupService {
   }
 
   async findOne(id: string): Promise<Group> {
-    const group = this.groupRepository.findOne(id);
+    const group = this.groupRepository.findOne(id, {
+      relations: ['createdByUser'],
+    });
     return await group;
   }
 
