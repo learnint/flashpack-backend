@@ -23,6 +23,8 @@ import { StringUtil } from 'src/util/string.util';
 import { GroupAdminDto } from './dto/group-admin.dto';
 import { PackService } from 'src/pack/pack.service';
 import { PackType } from 'src/pack/constants';
+import { GroupUserDto } from './dto/group-user.dto';
+import { Pack } from 'src/pack/entities/pack.entity';
 
 @Injectable()
 export class GroupService {
@@ -294,15 +296,23 @@ export class GroupService {
     const adminMember = await this.groupAdminRepository.findOne({
       where: { user: userId ? userId : null, group: group.id },
     });
-    //const memberNames: string[] = [];
-    const users: UserDto[] = [];
+    const users: GroupUserDto[] = [];
+    const packs: Pack[] = await this.packService.findAllForUserOrGroup(
+      group.id,
+      PackType.Group,
+    );
+    groupDto.packCount = packs.length;
     for (const member of groupMembers) {
-      users.push(
-        plainToClass(UserDto, await this.userService.findOne(member.user.id)),
+      const user: GroupUserDto = plainToClass(
+        GroupUserDto,
+        await this.userService.findOne(member.user.id),
       );
+      user.isJoined = member.isJoined;
+      users.push(user);
       if (userId && userId === member.user.id)
         groupDto.isJoined = member.isJoined;
     }
+
     groupDto.createdByUserId = group.createdByUser.id
       ? group.createdByUser.id
       : group.createdByUser.toString();

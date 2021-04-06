@@ -1,6 +1,7 @@
 import { Exclude, Expose } from 'class-transformer';
 import { IsNotEmpty, IsUUID, Length } from 'class-validator';
 import { UserDto } from 'src/user/dto/user.dto';
+import { GroupUserDto } from './group-user.dto';
 
 @Exclude()
 export class GroupDto {
@@ -23,11 +24,13 @@ export class GroupDto {
   @Expose()
   tags: string[];
   @Expose()
-  users: UserDto[];
+  users: GroupUserDto[];
   @Expose()
   memberCount: number;
   @Expose()
   isJoined: boolean;
   @Expose()
   isAdmin: boolean;
+  @Expose()
+  packCount: number;
 }
