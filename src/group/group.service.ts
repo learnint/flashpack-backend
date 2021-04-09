@@ -46,8 +46,6 @@ export class GroupService {
     createdById: string,
   ): Promise<Group> {
     const newGroup = Group.create(createGroupDto);
-    // detect existing group name
-    await this.detectDuplicate(newGroup, createdById);
 
     newGroup.createdByUser = await this.userService.findOne(createdById);
     newGroup.createdByName = `${newGroup.createdByUser.firstName} ${newGroup.createdByUser.lastName}`;
@@ -183,9 +181,8 @@ export class GroupService {
   async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
     const group = await this.findOne(id);
 
-    //Not found and conflict exceptions
+    //Not found
     if (!group) throw new NotFoundException(`Group with ID: '${id}' not found`);
-    await this.detectDuplicate(Group.create(updateGroupDto), id, true);
 
     //update
     for (const key in updateGroupDto) {

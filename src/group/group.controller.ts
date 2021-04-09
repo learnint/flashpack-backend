@@ -130,8 +130,11 @@ export class GroupController {
     @Body() inviteDto: InviteDto,
     @Req() req,
   ): Promise<GroupMemberDto[]> {
-    const isAdmin = this.groupService.userIsAdmin(req.user.id);
-    const isGroupAdmin = this.groupService.isGroupAdmin(req.user.id, groupId);
+    const isAdmin = await this.groupService.userIsAdmin(req.user.id);
+    const isGroupAdmin = await this.groupService.isGroupAdmin(
+      req.user.id,
+      groupId,
+    );
     const groupMemberDtos: GroupMemberDto[] = [];
     if (!isAdmin && !isGroupAdmin) {
       throw new ForbiddenException();
