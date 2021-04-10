@@ -12,6 +12,7 @@ import {
   Req,
   NotFoundException,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { PackService } from './pack.service';
 import {
@@ -28,116 +29,157 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Pack } from './entities/pack.entity';
 import { PackDto } from './dto/pack.dto';
-import { plainToClass } from 'class-transformer';
 import { CreateUserPackDto } from './dto/create-user-pack.dto';
 import { CreateGroupPackDto } from './dto/create-group-pack.dto';
 import { PackType, PackTypeInclusive } from './constants';
 import { UpdatePackDto } from './dto/update-pack.dto';
-import { UserDto } from 'src/user/dto/user.dto';
-import { GroupDto } from 'src/group/dto/group.dto';
+import { CreatePackDto } from './dto/create-pack.dto';
+import { StringUtil } from 'src/util/string.util';
 
 @ApiTags('pack')
-@Controller('packs')
+@Controller()
 export class PackController {
   constructor(private readonly packService: PackService) {}
 
+  // @ApiInternalServerErrorResponse({
+  //   description: 'An internal server error occured',
+  // })
+  // @ApiCreatedResponse({ description: 'Created new Pack', type: Pack })
+  // @ApiConflictResponse({ description: 'Duplicate group name' })
+  // @ApiBadRequestResponse({
+  //   description: 'Model broken somewhere in the request',
+  // })
+  // @ApiForbiddenResponse({ description: 'Forbidden' })
+  // @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  // @ApiBearerAuth()
+  // @UseGuards(AuthGuard('jwt'))
+  // @Post('/groupPack')
+  // async createGroupPack(
+  //   @Body() createPackDto: CreateGroupPackDto,
+  //   @Req() req,
+  // ): Promise<PackDto> {
+  //   await this.packService.checkForbiddenOnCreate(
+  //     req.user.id,
+  //     createPackDto.groupId,
+  //     PackType.Group,
+  //   );
+  //   return await this.packService.createGroupPack(createPackDto);
+  // }
+
+  // @ApiForbiddenResponse({ description: 'Forbidden' })
+  // @ApiInternalServerErrorResponse({
+  //   description: 'An internal server error occured',
+  // })
+  // @ApiCreatedResponse({ description: 'Created new Pack', type: Pack })
+  // @ApiBadRequestResponse({
+  //   description: 'Model broken somewhere in the request',
+  // })
+  // @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  // @ApiBearerAuth()
+  // @UseGuards(AuthGuard('jwt'))
+  // @Post('/userPack')
+  // async createUserPack(
+  //   @Body() createPackDto: CreateUserPackDto,
+  //   @Req() req,
+  // ): Promise<PackDto> {
+  //   if (!createPackDto.userId) createPackDto.userId = req.user.id;
+  //   await this.packService.checkForbiddenOnCreate(
+  //     req.user.id,
+  //     createPackDto.userId,
+  //     PackType.User,
+  //   );
+  //   return await this.packService.createUserPack(createPackDto, req.user.id);
+  // }
+
+  // Assumes the user to create for is the current user
+  // when a groupId is passed it creates the groupPack if the user is a member
+  @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
   @ApiCreatedResponse({ description: 'Created new Pack', type: Pack })
-  @ApiConflictResponse({ description: 'Duplicate group name' })
-  @ApiBadRequestResponse({
-    description: 'Model broken somewhere in the request',
-  })
-  @ApiForbiddenResponse({ description: 'Forbidden' })
-  @ApiUnauthorizedResponse({ description: 'Not authorized' })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @Post('/groupPack')
-  async createGroupPack(
-    @Body() createPackDto: CreateGroupPackDto,
-    @Req() req,
-  ): Promise<PackDto> {
-    await this.packService.checkForbiddenOnCreate(
-      req.user.id,
-      createPackDto.groupId,
-      PackType.Group,
-    );
-    return await this.packService.createGroupPack(createPackDto);
-  }
-
-  @ApiForbiddenResponse({ description: 'Forbidden' })
-  @ApiInternalServerErrorResponse({
-    description: 'An internal server error occured',
-  })
-  @ApiCreatedResponse({ description: 'Created new Pack', type: Pack })
-  @ApiConflictResponse({ description: 'Duplicate group name' })
   @ApiBadRequestResponse({
     description: 'Model broken somewhere in the request',
   })
   @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiQuery({ name: 'groupId', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post('/userPack')
-  async createUserPack(
-    @Body() createPackDto: CreateUserPackDto,
+  @Post('pack')
+  async createPack(
+    @Body() createPackDto: CreatePackDto,
+    @Query('groupId') groupId: string,
     @Req() req,
   ): Promise<PackDto> {
-    if (!createPackDto.userId) createPackDto.userId = req.user.id;
-    await this.packService.checkForbiddenOnCreate(
-      req.user.id,
-      createPackDto.userId,
-      PackType.User,
-    );
-    return await this.packService.createUserPack(createPackDto);
+    let retVal;
+    const stringUtil: StringUtil = new StringUtil();
+    if (groupId && !(await stringUtil.isUUID(groupId)))
+      throw new BadRequestException('Validation failed (uuid  is expected)');
+    if (groupId) {
+      await this.packService.checkForbiddenOnCreate(
+        req.user.id,
+        groupId,
+        PackType.Group,
+      );
+      retVal = await this.packService.createGroupPack(createPackDto, groupId);
+    } else {
+      await this.packService.checkForbiddenOnCreate(
+        req.user.id,
+        req.user.id,
+        PackType.User,
+      );
+      retVal = await this.packService.createUserPack(
+        createPackDto,
+        req.user.id,
+      );
+    }
+    return retVal;
   }
 
   @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiQuery({ name: 'groupId', required: false })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @ApiQuery({ name: 'type', enum: PackTypeInclusive })
-  @Get()
+  @ApiQuery({ name: 'groupId', required: false })
+  @Get('packs')
   async findAll(
-    @Query('type') type: PackTypeInclusive = PackTypeInclusive.Both,
+    @Query('groupId') groupId: string,
     @Req() req,
   ): Promise<PackDto[]> {
-    let packsFiltered = await this.packService.findAll();
-    if (!(await this.packService.userIsAdmin(req.user.id)))
-      throw new ForbiddenException();
-    switch (type) {
-      case PackTypeInclusive.Both:
-        packsFiltered = packsFiltered.sort();
-        break;
-      case PackTypeInclusive.Group:
-        packsFiltered = packsFiltered.filter((x) => x.groupPack).sort();
-        break;
-      case PackTypeInclusive.User:
-        packsFiltered = packsFiltered.filter((x) => x.userPack).sort();
-        break;
-    }
-    return await this.packService.createPacksDto(packsFiltered);
+    const stringUtil: StringUtil = new StringUtil();
+    if (groupId && !(await stringUtil.isUUID(groupId)))
+      throw new BadRequestException('Validation failed (uuid is expected)');
+    const packs = await this.packService.findAllForUserOrGroup(
+      groupId ? groupId : req.user.id,
+      groupId ? PackType.Group : PackType.User,
+    );
+    await this.packService.checkForbidden(
+      req.user.id,
+      packs[0] || undefined,
+      true,
+      groupId,
+    );
+    return await this.packService.createPacksDto(packs);
   }
 
   @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBearerAuth()
   @ApiQuery({ name: 'type', enum: PackType })
   @UseGuards(AuthGuard('jwt'))
-  @Get('/type/:id')
+  @Get('pack/type/:id')
   async findAllForUserOrGroup(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('type') type: PackType,
     @Req() req,
   ) {
     const packs = await this.packService.findAllForUserOrGroup(id, type);
-    if (!packs || packs.length === 0)
-      throw new NotFoundException(`ID: '${id}' not found for type: '${type}'`);
-    await this.packService.checkForbidden(req.user.id, packs[0]);
+    await this.packService.checkForbidden(req.user.id, packs[0] || undefined);
     return await this.packService.createPacksDto(packs);
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
+  @Get('pack/:id')
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req,
@@ -153,13 +195,12 @@ export class PackController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Put(':id')
+  @Put('pack/:id')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePackDto: UpdatePackDto,
     @Req() req,
   ): Promise<PackDto> {
-
     const pack = await this.packService.findOne(id);
     if (!pack) throw new NotFoundException(`Pack with ID: '${id}' not found`);
     //check forbidden
@@ -173,7 +214,7 @@ export class PackController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Delete(':id')
+  @Delete('pack/:id')
   async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
     const packDto = await this.packService.findOne(id);
     if (!packDto)

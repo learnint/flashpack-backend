@@ -99,7 +99,7 @@ export class UserController {
   ): Promise<UserDto> {
     const stringUtil: StringUtil = new StringUtil();
     if (id && !(await stringUtil.isUUID(id)))
-      throw new BadRequestException('Not a UUID');
+      throw new BadRequestException('Validation failed (uuid  is expected)');
     const user = plainToClass(
       UserDto,
       await this.userService.findOne(id ? id : req.user.id),

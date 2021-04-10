@@ -14,6 +14,7 @@ import { UserService } from 'src/user/user.service';
 import { Not, Repository } from 'typeorm';
 import { PackType } from './constants';
 import { CreateGroupPackDto } from './dto/create-group-pack.dto';
+import { CreatePackDto } from './dto/create-pack.dto';
 import { CreateUserPackDto } from './dto/create-user-pack.dto';
 import { PackDto } from './dto/pack.dto';
 import { UpdatePackDto } from './dto/update-pack.dto';
@@ -37,7 +38,8 @@ export class PackService {
 
   async detectType(pack: Pack): Promise<PackType> {
     let type: PackType;
-    if (pack.userPack || pack.groupPack)
+
+    if (pack && (pack.userPack || pack.groupPack))
       type = pack.userPack
         ? PackType.User
         : pack.groupPack
@@ -47,13 +49,14 @@ export class PackService {
     return type || undefined;
   }
 
-  async createUserPack(createPackDto: CreateUserPackDto): Promise<PackDto> {
+  async createUserPack(
+    createPackDto: CreatePackDto,
+    userId: string,
+  ): Promise<PackDto> {
     const pack = Pack.create(createPackDto);
-    const user = await this.userService.findOne(createPackDto.userId);
+    const user = await this.userService.findOne(userId);
     if (!user)
-      throw new NotFoundException(
-        `User with id: '${createPackDto.userId}' does not exist`,
-      );
+      throw new NotFoundException(`User with id: '${userId}' does not exist`);
     const userPack = UserPack.create();
     userPack.pack = pack;
     userPack.user = user;
@@ -63,13 +66,14 @@ export class PackService {
     return await this.createPackDto(await this.findOne(pack.id));
   }
 
-  async createGroupPack(createPackDto: CreateGroupPackDto): Promise<PackDto> {
+  async createGroupPack(
+    createPackDto: CreatePackDto,
+    groupId: string,
+  ): Promise<PackDto> {
     const pack = Pack.create(createPackDto);
-    const group = await this.groupService.findOne(createPackDto.groupId);
+    const group = await this.groupService.findOne(groupId);
     if (!group)
-      throw new NotFoundException(
-        `Group with id: '${createPackDto.groupId}' does not exist`,
-      );
+      throw new NotFoundException(`Group with id: '${groupId}' does not exist`);
     const groupPack = GroupPack.create();
     groupPack.pack = pack;
     groupPack.group = group;
@@ -119,8 +123,11 @@ export class PackService {
     const packs: Pack[] = [];
     switch (type) {
       case PackType.User: {
+        const user = await this.userService.findOne(id);
+        if (!user)
+          throw new NotFoundException(`User with ID: '${id}' not found`);
         const userPacks = await this.userPackRepository.find({
-          where: { user: await this.userService.findOne(id) },
+          where: { user: user },
           relations: ['pack'],
         });
         for (const userPack of userPacks) {
@@ -129,8 +136,11 @@ export class PackService {
         break;
       }
       case PackType.Group: {
+        const group = await this.groupService.findOne(id);
+        if (!group)
+          throw new NotFoundException(`Group with ID: '${id}' not found`);
         const groupPacks = await this.groupPackRepository.find({
-          where: { group: await this.groupService.findOne(id) },
+          where: { group: group },
           relations: ['pack'],
         });
         for (const groupPack of groupPacks) {
@@ -165,14 +175,31 @@ export class PackService {
     return await this.userService.isAdmin(id);
   }
 
-  async checkForbidden(userId: string, pack: Pack, readOnly = true) {
+  async checkForbidden(
+    userId: string,
+    pack: Pack,
+    readOnly = true,
+    groupId?: string,
+  ): Promise<void> {
     const type = await this.detectType(pack);
     const isAdmin = await this.userIsAdmin(userId);
-    if (type === PackType.User) {
+
+    // *****  BEGIN SPECIAL CASE  ******
+    // special case for the GET with groupId specified.
+    // need to make sure the user is a group member
+    // even if the pack array is empty
+    const isGroupMemberPrelim = groupId
+      ? await this.groupService.isGroupMember(userId, groupId)
+      : undefined;
+
+    if (isGroupMemberPrelim !== undefined && isGroupMemberPrelim === false)
+      throw new ForbiddenException();
+    // ****** END SPECIAL CASE  ******
+
+    if (type && type === PackType.User) {
       if (userId !== pack.userPack.id && !isAdmin)
         throw new ForbiddenException();
-    }
-    if (type === PackType.Group) {
+    } else if (type === PackType.Group) {
       const isGroupAdmin = await this.groupService.isGroupAdmin(
         userId,
         pack.groupPack.group.id,
@@ -200,6 +227,5 @@ export class PackService {
       const isGroupAdmin = await this.groupService.isGroupAdmin(userId, typeId);
       if (!isGroupAdmin && !userIsAdmin) throw new ForbiddenException();
     }
-
   }
 }
