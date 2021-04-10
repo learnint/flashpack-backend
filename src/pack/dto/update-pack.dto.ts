@@ -1,4 +1,3 @@
-import { PartialType } from '@nestjs/mapped-types';
 import { Exclude, Expose } from 'class-transformer';
 import {
   IsBoolean,
@@ -9,7 +8,6 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { CreateUserPackDto } from './create-user-pack.dto';
 
 @Exclude()
 export class UpdatePackDto {
@@ -17,6 +15,11 @@ export class UpdatePackDto {
   @Length(3, 50)
   @Expose()
   name: string;
+
+  @IsOptional()
+  @Length(3, 500)
+  @Expose()
+  description?: string;
 
   @IsBoolean()
   @IsOptional()

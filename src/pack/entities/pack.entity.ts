@@ -30,6 +30,9 @@ export class Pack extends BaseEntity {
   @Column('int')
   totalTime: number;
 
+  @Column({ nullable: true })
+  description?: string;
+
   @OneToOne(() => GroupPack, (groupPack) => groupPack.pack, {
     nullable: true,
     cascade: true,

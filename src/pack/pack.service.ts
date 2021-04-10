@@ -11,11 +11,9 @@ import { GroupDto } from 'src/group/dto/group.dto';
 import { GroupService } from 'src/group/group.service';
 import { UserDto } from 'src/user/dto/user.dto';
 import { UserService } from 'src/user/user.service';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PackType } from './constants';
-import { CreateGroupPackDto } from './dto/create-group-pack.dto';
 import { CreatePackDto } from './dto/create-pack.dto';
-import { CreateUserPackDto } from './dto/create-user-pack.dto';
 import { PackDto } from './dto/pack.dto';
 import { UpdatePackDto } from './dto/update-pack.dto';
 import { GroupPack } from './entities/group-pack.entity';
@@ -163,7 +161,6 @@ export class PackService {
       if (updatePackDto[key] !== pack[key] && updatePackDto[key] !== null)
         pack[key] = updatePackDto[key];
     }
-    console.log(pack);
     return await this.packRepository.save(pack);
   }
 
@@ -192,12 +189,13 @@ export class PackService {
       ? await this.groupService.isGroupMember(userId, groupId)
       : undefined;
 
-    if (isGroupMemberPrelim !== undefined && isGroupMemberPrelim === false)
+    if (isGroupMemberPrelim !== undefined && isGroupMemberPrelim === false) {
       throw new ForbiddenException();
+    }
     // ****** END SPECIAL CASE  ******
 
     if (type && type === PackType.User) {
-      if (userId !== pack.userPack.id && !isAdmin)
+      if (userId !== pack.userPack.user.id && !isAdmin)
         throw new ForbiddenException();
     } else if (type === PackType.Group) {
       const isGroupAdmin = await this.groupService.isGroupAdmin(
