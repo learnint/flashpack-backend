@@ -1,5 +1,7 @@
 import {
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -22,12 +24,14 @@ export class CardService {
     @InjectRepository(Card) private readonly cardRepository: Repository<Card>,
     @InjectRepository(CardOption)
     private readonly cardOptionRepository: Repository<CardOption>,
+    @Inject(forwardRef(() => PackService))
     private readonly packService: PackService,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly groupService: GroupService,
   ) {}
 
-  async create(createCardDto: CreateCardDto, userId: string) {
+  async create(createCardDto: CreateCardDto, userId: string): Promise<Card> {
     const card = Card.create(createCardDto);
     const isAdmin = await this.userIsAdmin(userId);
     const pack = plainToClass(
@@ -50,6 +54,10 @@ export class CardService {
         throw new ForbiddenException();
     }
     return await this.cardRepository.save(card);
+  }
+
+  async findAllForPack(packId: string): Promise<Card[]> {
+    return await this.cardRepository.find({where: { pack: packId } });
   }
 
   findAll() {

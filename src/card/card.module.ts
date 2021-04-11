@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CardService } from './card.service';
 import { CardController } from './card.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,8 +13,8 @@ import { GroupModule } from 'src/group/group.module';
   providers: [CardService],
   imports: [
     TypeOrmModule.forFeature([Card, CardOption]),
-    PackModule,
-    UserModule,
+    forwardRef(() => PackModule),
+    forwardRef(() => UserModule),
     GroupModule,
   ],
   exports: [CardService],

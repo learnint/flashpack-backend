@@ -14,6 +14,9 @@ export class PackDto {
   timed: boolean;
 
   @Expose()
+  description: string;
+
+  @Expose()
   totalTime: number;
 
   @Expose()
@@ -24,4 +27,7 @@ export class PackDto {
 
   @Expose()
   userPack: UserPackDto;
+
+  @Expose()
+  cardCount: number;
 }

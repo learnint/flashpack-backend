@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
+import { CardService } from 'src/card/card.service';
 import { GroupDto } from 'src/group/dto/group.dto';
 import { GroupService } from 'src/group/group.service';
 import { UserDto } from 'src/user/dto/user.dto';
@@ -32,6 +33,8 @@ export class PackService {
     private readonly groupService: GroupService,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    @Inject(forwardRef(() => CardService))
+    private readonly cardService: CardService
   ) {}
 
   async detectType(pack: Pack): Promise<PackType> {
@@ -96,6 +99,9 @@ export class PackService {
 
       if (dto.groupPack)
         dto.groupPack.group = plainToClass(GroupDto, dto.groupPack.group);
+
+      dto.cardCount = (await this.cardService.findAllForPack(pack.id)).length;
+
     }
     return dto;
   }
