@@ -33,7 +33,11 @@ import { CreatePackDto } from './dto/create-pack.dto';
 import { StringUtil } from 'src/util/string.util';
 
 @ApiTags('pack')
+<<<<<<< HEAD
 @Controller('/api')
+=======
+@Controller()
+>>>>>>> 27f72cf1e204e2f007c580ad9570e3f22bac1b7b
 export class PackController {
   constructor(private readonly packService: PackService) {}
 
