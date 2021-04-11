@@ -17,7 +17,7 @@ export class UpdatePackDto {
   name: string;
 
   @IsOptional()
-  @Length(3, 500)
+  @Length(0, 500)
   @Expose()
   description?: string;
 
