@@ -18,7 +18,7 @@ export class CreatePackDto {
   name: string;
 
   @IsOptional()
-  @Length(3, 500)
+  @Length(0, 500)
   @Expose()
   description?: string;
 
