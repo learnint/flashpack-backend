@@ -33,7 +33,7 @@ import { CreatePackDto } from './dto/create-pack.dto';
 import { StringUtil } from 'src/util/string.util';
 
 @ApiTags('pack')
-@Controller('api')
+@Controller()
 export class PackController {
   constructor(private readonly packService: PackService) {}
 
