@@ -25,6 +25,7 @@ import { PackService } from 'src/pack/pack.service';
 import { PackType } from 'src/pack/constants';
 import { GroupUserDto } from './dto/group-user.dto';
 import { Pack } from 'src/pack/entities/pack.entity';
+import { GroupOrderBy } from './constants';
 
 @Injectable()
 export class GroupService {
@@ -147,20 +148,51 @@ export class GroupService {
     }
   }
 
-  async findAll(): Promise<Group[]> {
-    return await this.groupRepository.find();
+  async findAll(orderBy?: GroupOrderBy): Promise<Group[]> {
+    let groups: Group[];
+    if (orderBy === GroupOrderBy.Name || orderBy === undefined) {
+      groups = await this.groupRepository.find({
+        order: {
+          name: 'ASC',
+        },
+      });
+    } else {
+      groups = await this.groupRepository.find({
+        order: {
+          createdDate: 'ASC',
+        },
+      });
+    }
+    return groups;
   }
 
-  async findAllForUser(userId: string): Promise<Group[]> {
+  async findAllForUser(
+    userId: string,
+    orderBy?: GroupOrderBy,
+  ): Promise<Group[]> {
+    let groups: Group[];
     const members = await this.groupMemberRepository.find({
       relations: ['group'],
       where: { user: userId },
     });
     const ids: string[] = [];
     members.forEach((x) => (x ? ids.push(x.group.id) : x));
-    return await this.groupRepository.findByIds(ids, {
-      relations: ['createdByUser'],
-    });
+    if (orderBy === GroupOrderBy.Name || orderBy === undefined) {
+      groups = await this.groupRepository.findByIds(ids, {
+        relations: ['createdByUser'],
+        order: {
+          name: 'ASC',
+        },
+      });
+    } else {
+      groups = await this.groupRepository.findByIds(ids, {
+        relations: ['createdByUser'],
+        order: {
+          createdDate: 'ASC',
+        },
+      });
+    }
+    return groups;
   }
 
   async findOne(id: string): Promise<Group> {

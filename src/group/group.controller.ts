@@ -39,6 +39,7 @@ import { GroupMemberDto } from './dto/group-member.dto';
 import { GroupAdminDto } from './dto/group-admin.dto';
 import { InviteDto } from './dto/invite.dto';
 import { UserService } from 'src/user/user.service';
+import { GroupOrderBy } from './constants';
 
 @ApiTags('group')
 @Controller('/api')
@@ -211,12 +212,19 @@ export class GroupController {
   @ApiInternalServerErrorResponse({
     description: 'An internal server error occured',
   })
+  @ApiQuery({ name: 'orderBy', required: false, enum: GroupOrderBy })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get('groups')
-  async findAll(@Req() req): Promise<GroupDto[]> {
+  async findAll(
+    @Req() req,
+    @Query('orderBy') orderBy: GroupOrderBy,
+  ): Promise<GroupDto[]> {
     return await this.groupService.createGroupDtoArray(
-      await this.groupService.findAllForUser(req.user.id),
+      await this.groupService.findAllForUser(
+        req.user.id,
+        orderBy ? orderBy : GroupOrderBy.Name,
+      ),
       req.user.id,
     );
   }
