@@ -15,6 +15,7 @@ export class Card extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('simple-enum', { enum: CardType })
   type: CardType;
 
   @Column()
@@ -30,7 +31,9 @@ export class Card extends BaseEntity {
   pack: Pack;
 
   @OneToMany(() => CardOption, (option) => option.card, {
-    eager: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+    cascade: true,
   })
   options: CardOption[];
 }

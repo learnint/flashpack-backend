@@ -8,25 +8,29 @@ import {
   Delete,
   Req,
   UseGuards,
+  ParseUUIDPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { runInNewContext } from 'vm';
 import { CardService } from './card.service';
+import { CardDto } from './dto/card.dto';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { Card } from './entities/card.entity';
 
 @ApiTags('card')
-@Controller('card')
+@Controller('api')
 export class CardController {
   constructor(private readonly cardService: CardService) {}
 
@@ -41,28 +45,87 @@ export class CardController {
   @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Post()
-  async create(@Body() createCardDto: CreateCardDto, @Req() req) {
-    return await this.cardService.create(createCardDto, req.user.id);
+  @Post('/card')
+  async create(
+    @Body() createCardDto: CreateCardDto,
+    @Req() req,
+  ): Promise<CardDto> {
+    await this.cardService.checkForbidden(req.user.id, createCardDto.packId);
+    return await this.cardService.createCardDto(
+      await this.cardService.create(createCardDto),
+    );
   }
 
-  @Get()
-  findAll() {
-    return this.cardService.findAll();
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
+  @ApiBadRequestResponse({
+    description: 'Model broken somewhere in the request',
+  })
+  @ApiNotFoundResponse({ description: 'Pack not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/pack/:id/cards')
+  async findAllForPack(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req,
+  ): Promise<CardDto[]> {
+    await this.cardService.checkForbidden(req.user.id, id);
+    return await this.cardService.createCardsDto(
+      await this.cardService.findAllForPack(id),
+    );
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cardService.findOne(+id);
+  @ApiInternalServerErrorResponse({
+    description: 'An internal server error occured',
+  })
+  @ApiBadRequestResponse({
+    description: 'Model broken somewhere in the request',
+  })
+  @ApiNotFoundResponse({ description: 'Card not found' })
+  @ApiUnauthorizedResponse({ description: 'Not authorized' })
+  @ApiForbiddenResponse({ description: 'Forbidden' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/card/:id')
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req,
+  ): Promise<CardDto> {
+    const card = await this.cardService.findOne(id);
+    if (!card)
+      throw new NotFoundException(`Card with Id: '${id}' does not exist.`);
+    await this.cardService.checkForbidden(req.user.id, card.pack.id);
+    return await this.cardService.createCardDto(card);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateCardDto: UpdateCardDto) {
-    return this.cardService.update(+id, updateCardDto);
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Put('/card/:id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateCardDto: UpdateCardDto,
+    @Req() req,
+  ): Promise<CardDto> {
+    const card = await this.cardService.findOne(id);
+    if (!card) throw new NotFoundException(`Card with ID: '${id}' not found`);
+    await this.cardService.checkForbidden(req.user.id, card.pack.id);
+    return await this.cardService.createCardDto(
+      await this.cardService.update(id, updateCardDto),
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cardService.remove(+id);
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('/card/:id')
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req,
+  ): Promise<void> {
+    const card = await this.cardService.findOne(id);
+    if (card) await this.cardService.checkForbidden(req.user.id, card.pack.id);
+    return this.cardService.remove(card);
   }
 }

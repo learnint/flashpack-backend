@@ -34,7 +34,7 @@ export class PackService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     @Inject(forwardRef(() => CardService))
-    private readonly cardService: CardService
+    private readonly cardService: CardService,
   ) {}
 
   async detectType(pack: Pack): Promise<PackType> {
@@ -101,7 +101,6 @@ export class PackService {
         dto.groupPack.group = plainToClass(GroupDto, dto.groupPack.group);
 
       dto.cardCount = (await this.cardService.findAllForPack(pack.id)).length;
-
     }
     return dto;
   }
@@ -155,7 +154,9 @@ export class PackService {
       default:
         break;
     }
-    return packs;
+
+    //always sort the array by the packs name in ascending order.
+    return packs.sort((a, b) => (a.name > b.name ? 1 : -1));
   }
 
   async update(id: string, updatePackDto: UpdatePackDto): Promise<Pack> {
@@ -170,7 +171,7 @@ export class PackService {
     return await this.packRepository.save(pack);
   }
 
-  async remove(pack: Pack) {
+  async remove(pack: Pack): Promise<void> {
     await this.packRepository.remove(pack);
   }
 

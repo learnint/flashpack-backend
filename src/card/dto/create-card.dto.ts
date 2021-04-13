@@ -17,7 +17,7 @@ export class CreateCardDto {
   @Expose()
   type: CardType;
 
-  @Length(10, 1000)
+  @Length(5, 1000)
   @Expose()
   question: string;
 
@@ -35,7 +35,7 @@ export class CreateCardDto {
 @Exclude()
 export class CreateCardOptionDto {
   @Expose()
-  @Length(1, 20)
+  @Length(1, 200)
   text: string;
 
   @Expose()
