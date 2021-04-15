@@ -131,12 +131,9 @@ export class CardService {
           throw new BadRequestException(
             `A card of type: '${card.type}' must have between 2 and 10 options`,
           );
-        if (
-          (correctOptionCount > 1 || correctOptionCount < 1) &&
-          card.type === CardType.MC
-        )
+        if (correctOptionCount !== 1 && card.type === CardType.MC)
           throw new BadRequestException(
-            `Card of type: '${card.type}' must exactly one correct answer`,
+            `Card of type: '${card.type}' must have exactly one correct answer`,
           );
         if (correctOptionCount < 1 && card.type === CardType.CHK)
           throw new BadRequestException(
