@@ -25,6 +25,6 @@ export class CardDto {
 export class CardOptionDto {
   @Expose()
   text: string;
-  //   @Expose()
-  //   isCorrect: boolean;
+  @Expose()
+  isCorrect: boolean;
 }
