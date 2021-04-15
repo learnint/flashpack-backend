@@ -67,7 +67,7 @@ export class CardController {
   @ApiForbiddenResponse({ description: 'Forbidden' })
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @Get('/pack/:id/cards')
+  @Get('/cards/pack/:id')
   async findAllForPack(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req,
