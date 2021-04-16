@@ -22,7 +22,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { runInNewContext } from 'vm';
 import { CardService } from './card.service';
 import { CardDto } from './dto/card.dto';
 import { CreateCardDto } from './dto/create-card.dto';

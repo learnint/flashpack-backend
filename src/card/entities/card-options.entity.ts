@@ -16,6 +16,8 @@ export class CardOption extends BaseEntity {
   text: string;
   @Column()
   isCorrect: boolean;
+  @Column()
+  order: number;
 
   @ManyToOne(() => Card, (card) => card.options, {
     nullable: false,

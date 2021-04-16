@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -46,19 +45,26 @@ export class CardService {
       throw new NotFoundException(
         `Pack with id: '${createCardDto.packId}' does not exist`,
       );
-
+    card.options.sort((a, b) => a.order - b.order);
     return await this.cardRepository.save(card);
   }
 
   async findAllForPack(packId: string): Promise<Card[]> {
-    return await this.cardRepository.find({
+    const cards: Card[] = await this.cardRepository.find({
       where: { pack: packId },
       relations: ['options'],
     });
+
+    cards.map((x) => x.options.sort((a, b) => a.order - b.order));
+    return cards;
   }
 
   async findOne(id: string): Promise<Card> {
-    return await this.cardRepository.findOne(id, { relations: ['options'] });
+    const card = await this.cardRepository.findOne(id, {
+      relations: ['options'],
+    });
+    card.options = card.options.sort((a, b) => a.order - b.order);
+    return card;
   }
 
   async update(id: string, updateCardDto: UpdateCardDto): Promise<Card> {
@@ -87,6 +93,9 @@ export class CardService {
           card[key] = updateCardDto[key];
       }
     }
+    updateCardDto.options
+      ? card.options.sort((a, b) => a.order - b.order)
+      : null;
     return await this.cardRepository.save(card);
   }
 

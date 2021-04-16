@@ -37,8 +37,10 @@ export class CreateCardOptionDto {
   @Expose()
   @Length(1, 200)
   text: string;
-
   @Expose()
   @IsBoolean()
   isCorrect: boolean;
+  @Expose()
+  @IsNotEmpty()
+  order: number;
 }

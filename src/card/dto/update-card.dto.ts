@@ -2,6 +2,7 @@ import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsUUID,
   Length,
@@ -37,4 +38,8 @@ export class UpdateCardOptionDto {
   @Expose()
   @IsBoolean()
   isCorrect: boolean;
+
+  @Expose()
+  @IsNotEmpty()
+  order: number;
 }
