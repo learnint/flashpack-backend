@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { CardService } from 'src/card/card.service';
+import { CardDto } from 'src/card/dto/card.dto';
 import { GroupDto } from 'src/group/dto/group.dto';
 import { GroupService } from 'src/group/group.service';
 import { UserDto } from 'src/user/dto/user.dto';
@@ -15,6 +16,7 @@ import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import { PackType } from './constants';
 import { CreatePackDto } from './dto/create-pack.dto';
+import { PackCardsDto } from './dto/pack-cards.dto';
 import { PackDto } from './dto/pack.dto';
 import { UpdatePackDto } from './dto/update-pack.dto';
 import { GroupPack } from './entities/group-pack.entity';
@@ -89,6 +91,27 @@ export class PackService {
       relations: ['groupPack', 'userPack'],
     });
     return pack;
+  }
+
+  async findOneWithCards(id:string): Promise<Pack>{
+    return await this.packRepository.findOne(id, {
+      relations:['groupPack','userPack','cards','cards.options']
+    })
+  }
+
+  async createPackWithCardsDto(pack:Pack): Promise<PackCardsDto> {
+    const dto = plainToClass(PackCardsDto, pack);
+    if (dto) {
+      if (dto.userPack)
+        dto.userPack.user = plainToClass(UserDto, dto.userPack.user);
+
+      if (dto.groupPack)
+        dto.groupPack.group = plainToClass(GroupDto, dto.groupPack.group);
+
+      dto.cards = await this.cardService.createCardsDto(pack.cards);
+      dto.cardCount = dto.cards.length;//(await this.cardService.findAllForPack(pack.id)).length;
+    }
+    return dto;
   }
 
   async createPackDto(pack: Pack): Promise<PackDto> {

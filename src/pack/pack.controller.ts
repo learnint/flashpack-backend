@@ -128,13 +128,13 @@ export class PackController {
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req,
   ): Promise<PackDto> {
-    const pack = await this.packService.findOne(id);
+    const pack = await this.packService.findOneWithCards(id);
     if (!pack) throw new NotFoundException(`Pack ID: '${id}' not found`);
 
     // check if forbidden
     await this.packService.checkForbidden(req.user.id, pack);
 
-    return await this.packService.createPackDto(pack);
+    return await this.packService.createPackWithCardsDto(pack);
   }
 
   @ApiBearerAuth()
