@@ -1,6 +1,4 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { IsNotEmpty } from 'class-validator';
-import { Pack } from 'src/pack/entities/pack.entity';
 import { CardType } from '../constants';
 
 @Exclude()
@@ -29,6 +27,5 @@ export class CardOptionDto {
   @Expose()
   isCorrect: boolean;
   @Expose()
-  @IsNotEmpty()
   order: number;
 }

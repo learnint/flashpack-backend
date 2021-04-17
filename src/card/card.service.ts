@@ -63,7 +63,7 @@ export class CardService {
     const card = await this.cardRepository.findOne(id, {
       relations: ['options'],
     });
-    card.options = card.options.sort((a, b) => a.order - b.order);
+    if (card) card.options = card.options.sort((a, b) => a.order - b.order);
     return card;
   }
 
@@ -121,6 +121,7 @@ export class CardService {
     return cardsDto;
   }
 
+  //we can use the packs forbidden method because the checks are the same
   async checkForbidden(userId: string, packId: string): Promise<void> {
     const pack = await this.packService.findOne(packId);
     await this.packService.checkForbidden(userId, pack);

@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsUUID,
   Length,
@@ -42,5 +43,6 @@ export class CreateCardOptionDto {
   isCorrect: boolean;
   @Expose()
   @IsNotEmpty()
+  @IsNumber()
   order: number;
 }

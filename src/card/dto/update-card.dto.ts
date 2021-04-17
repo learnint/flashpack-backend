@@ -4,9 +4,9 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsUUID,
-  Length,
   ValidateNested,
+  IsInt,
+  Length,
 } from 'class-validator';
 import { CardType } from '../constants';
 
@@ -41,5 +41,6 @@ export class UpdateCardOptionDto {
 
   @Expose()
   @IsNotEmpty()
+  @IsInt()
   order: number;
 }

@@ -196,10 +196,14 @@ export class GroupController {
     @Req() req,
   ): Promise<GroupAdminDto> {
     if (
-      !this.groupService.userIsAdmin(req.user.id) &&
-      !this.groupService.isGroupAdmin(req.user.id, joinGroupDto.groupId)
+      !(await this.groupService.userIsAdmin(req.user.id)) &&
+      !(await this.groupService.isGroupAdmin(req.user.id, joinGroupDto.groupId))
     )
       throw new ForbiddenException();
+    console.log(await this.groupService.userIsAdmin(req.user.id));
+    console.log(
+      await this.groupService.isGroupAdmin(req.user.id, joinGroupDto.groupId),
+    );
     const groupAdmin = await this.groupService.joinGroupAdmin(
       id ? id : req.user.id,
       joinGroupDto.groupId,

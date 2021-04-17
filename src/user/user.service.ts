@@ -21,7 +21,8 @@ import { PackService } from 'src/pack/pack.service';
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @Inject(forwardRef(() => PackService)) private readonly packService: PackService,
+    @Inject(forwardRef(() => PackService))
+    private readonly packService: PackService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -117,13 +118,12 @@ export class UserService {
       user.id,
       PackType.User,
     );
-  
+
     await this.userRepository.delete(id);
 
     for (const pack of packsToDelete) {
       await this.packService.remove(pack);
     }
-
   }
 
   async isAdmin(id: string): Promise<boolean> {
