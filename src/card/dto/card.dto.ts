@@ -23,6 +23,8 @@ export class CardDto {
 @Exclude()
 export class CardOptionDto {
   @Expose()
+  id: string;
+  @Expose()
   text: string;
   @Expose()
   isCorrect: boolean;
