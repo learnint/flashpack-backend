@@ -8,10 +8,13 @@ import { GroupModule } from './group/group.module';
 import { PackModule } from './pack/pack.module';
 import { StringUtil } from './util/string.util';
 import { CardModule } from './card/card.module';
+import { ConfigModule } from '@nestjs/config';
+import { isRgbColor } from 'class-validator';
 
 @Module({
   imports: [
     DatabaseModule,
+    ConfigModule.forRoot({isGlobal: true}),
     UserModule,
     AuthModule,
     GroupModule,
