@@ -16,6 +16,11 @@ This backend web server is directed toward teachers and students to produce flas
 
 ## Installation
 
+Install Postgresql (https://www.postgresql.org/)
+
+Configure the database:
+Create a database with a postgres user and at the required host (example 'localhost'). We call our database 'flashPack', however you can change this to whatever you like
+
 Clone the repository:
 ```
 git clone https://github.com/learnint/flashpack-backend.git
@@ -24,6 +29,18 @@ Change directory:
 ```
 cd flashpack-backend
 ```
+Add a .env file to the project root:
+```
+touch .env
+```
+
+Edit the .env file with the database connection details as keys like so:
+DATABASE_HOST=localhost
+DATABASE_PORT={port that the database runs on, postgres defaults to port 5432}
+DATABASE_USER={the postgres username}
+DATABASE_PASS={the password}
+DATABASE_SCHEMA={name of the database}
+
 Install dependencies:
 ```
 npm i
