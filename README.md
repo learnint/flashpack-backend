@@ -34,12 +34,12 @@ Add a .env file to the project root:
 touch .env
 ```
 
-Edit the .env file with the database connection details as keys like so:
-DATABASE_HOST=localhost
-DATABASE_PORT={port that the database runs on, postgres defaults to port 5432}
-DATABASE_USER={the postgres username}
-DATABASE_PASS={the password}
-DATABASE_SCHEMA={name of the database}
+Edit the .env file with the database connection details as keys like so:\
+DATABASE_HOST=localhost\
+DATABASE_PORT={port that the database runs on, postgres defaults to port 5432}\
+DATABASE_USER={the postgres username}\
+DATABASE_PASS={the password}\
+DATABASE_SCHEMA={name of the database}\
 
 Install dependencies:
 ```
