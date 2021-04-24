@@ -1,5 +1,7 @@
 # Flashpack Backend
 
+https://flashpack-api.azurewebsites.net/api
+
 This backend web server is directed toward teachers and students to produce flashcards for themselves or share in groups
 
 ## Technologies
